@@ -11,7 +11,7 @@
 
 #define INFINITY 0x7fffffff
 
-int score_rect(bit** logo, int logo_rows, int logo_cols, bit** image, int image_rows, int image_cols, int row_zero, int col_zero)
+int score_rect(bit** logo, int logo_rows, int logo_cols, bit** image, int image_rows, int image_cols, int row_zero, int col_zero, int cutoff)
 {
     if(row_zero+logo_rows >= image_rows || col_zero+logo_cols >= image_cols)
     {
@@ -26,6 +26,11 @@ int score_rect(bit** logo, int logo_rows, int logo_cols, bit** image, int image_
         for(col=0; col<logo_cols; ++col)
         {
             score += (logo[row][col] ^ image[row+row_zero][col+col_zero]);
+        }
+
+        if(score > cutoff)
+        {
+            return INFINITY;
         }
     }
     return score;
@@ -75,9 +80,10 @@ int main(int argc, char** argv)
     /* search for logo */
     /* This is stupid and slow, but it might just be good enough. */
     printf("Beginning search...\n");
-    int best = INFINITY;
-    int best_row = 0;
-    int best_col = 0;
+    int cutoff = (logo_rows*logo_cols)/50; /* Be at least within 2%. */
+    int best = cutoff;
+    int best_row = -1;
+    int best_col = -1;
     int start_row = 0;
     int start_col = 0;
 
@@ -86,7 +92,7 @@ int main(int argc, char** argv)
     {
         for(col=start_col; col<start_col+image_cols && best > 0; ++col)
         {
-            score = score_rect(logo, logo_rows, logo_cols, image, image_rows, image_cols, row, col);
+            score = score_rect(logo, logo_rows, logo_cols, image, image_rows, image_cols, row, col, best);
             if(score < best)
             {
                 printf("New best score %d (%d, %d)\n", score, row, col);
