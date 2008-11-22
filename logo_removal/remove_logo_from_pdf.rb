@@ -32,7 +32,7 @@ ppm_files.each do |image|
 end
 
 Dir["#{PREFIX}*out.pbm"].each do |pbm|
-    `convert -density 200 -units PixelsPerInch #{pbm} #{pbm.sub(/pbm$/, 'tiff')}`
+    `convert -density 300 -units PixelsPerInch #{pbm} #{pbm.sub(/pbm$/, 'tiff')}`
 end
 
 tiff_file = pdf.sub(/\.pdf$/, '.tiff')
