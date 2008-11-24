@@ -35,4 +35,5 @@ OUT_TIFF=${PDF%.pdf}.tiff
 OUT_PDF=${PDF%.pdf}_out.pdf
 tiffcp $PREFIX*.tiff $OUT_TIFF
 tiff2pdf $OUT_TIFF -t ${PDF%.pdf} -z -o $OUT_PDF
+rm $PREFIX*.pbm $PREFIX*.tiff rot_$PREFIX.pbm
 

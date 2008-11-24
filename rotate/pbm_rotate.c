@@ -1,6 +1,5 @@
 /*
- * Searches through an image (pbm only for now) for another image then makes
- * that section white.
+ * Rotate a pbm by an arbitrary amount.
  *
  * Author: Jay Anderson
  *
@@ -100,7 +99,7 @@ int main(int argc, char** argv)
 {
     if(argc < 3)
     {
-        printf("Usage: pbm_logo_removal <image> <logo image> <output filename> <start row> <number of rows to search> <start col> <number of columns to search>\n");
+        printf("Usage: pbm_rotate <image> <angle in degrees> <output filename>\n");
         exit(-1);
     }
 
