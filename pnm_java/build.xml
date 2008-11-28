@@ -1,0 +1,34 @@
+<project name="java-pnm" default="dist" basedir=".">
+
+    <property name="appname" value="JavaPnm"/>
+    <property name="dist.dir" value="dist"/>
+    <property name="build.dir" value="build"/>
+    <property name="src.dir" value="src"/>
+
+    <path id="class.path">
+        <pathelement path="${build.dir}"/>
+    </path>
+
+    <target name="compile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}"
+            destdir="${build.dir}"
+            debug="on"
+            deprecation="on"
+            classpathref="class.path"
+            optimize="off"
+            includes="**/*.java"
+            />
+    </target>
+
+    <target name="dist" depends="compile">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/${appname}.jar" basedir="${build.dir}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="build.dir"/>
+        <delete dir="dist.dir"/>
+    </target>
+
+</project>
