@@ -1,15 +1,20 @@
 package image.pnm;
 
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Pbm
 {
     public static final byte BLACK = 0x01;
     public static final byte WHITE = 0x00;
+    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     private int rows, cols;
     private byte[][] data;
@@ -86,7 +91,9 @@ public class Pbm
     private void read(InputStream is)
         throws IOException
     {
+        //System.out.println("Reading image...");
         boolean raw;
+        //Do my own buffering.
         int buffer_size = 1024;
         byte[] buffer = new byte[buffer_size];
         int index = 0;
@@ -119,6 +126,8 @@ public class Pbm
         }
 
         //skip whitespace
+        //TODO: I'm doing this a lot. Fix it! Really I just need a buffered
+        //input stream that lets me go back one character.
         while(isWhiteSpace(buffer[index]))
         {
             ++index;
@@ -234,22 +243,23 @@ public class Pbm
                 }
             }
         }
+        //System.out.println("Finished reading!");
     }
 
     public void write(String filename)
         throws IOException
     {
-        FileOutputStream fos = null;
+        OutputStream os = null;
         try
         {
-            fos = new FileOutputStream(filename);
-            this.write(fos);
+            os = new BufferedOutputStream(new FileOutputStream(filename));
+            this.write(os);
         }
         finally
         {
-            if(fos != null)
+            if(os != null)
             {
-                fos.close();
+                os.close();
             }
         }
     }
@@ -257,6 +267,7 @@ public class Pbm
     public void write(OutputStream os)
         throws IOException
     {
+        //System.out.println("Writing image...");
         os.write("P4\n".getBytes());
         os.write((cols+" "+rows+"\n").getBytes());
 
@@ -286,6 +297,7 @@ public class Pbm
                 bitIndex = 0;
             }
         }
+        //System.out.println("Finished writing!");
     }
 
     public Pbm centerRotate(double angle_degrees)
@@ -295,58 +307,74 @@ public class Pbm
 
     public Pbm rotate(double angle_degrees, double cx, double cy)
     {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        //System.out.println("Number of processors available: "+NUM_PROCESSORS);
+
+        final Pbm rotated = new Pbm(rows, cols);
+
         double angle = Math.toRadians(angle_degrees);
-        Pbm rotated = new Pbm(rows, cols);
-        //location in original
-        double rx, ry;
-        //weights to use for picking value
-        double wx, wy;
-        //integer location in original
-        int x, y;
+        final double sina = Math.sin(angle);
+        final double cosa = Math.cos(angle);
 
-        double sina = Math.sin(angle);
-        double cosa = Math.cos(angle);
-
-        double val;
-
-        for(int row=0; row<rows; ++row)
+        for(int rowc=0; rowc<rows; ++rowc)
         {
-            for(int col=0; col<cols; ++col)
+            final int row = rowc;
+            pool.execute(new Runnable()
             {
-                rx = col*cosa - row*sina;
-                ry = col*sina + row*cosa;
-                x = (int) rx;
-                y = (int) ry;
-                wx = 1.0 - (rx - x);
-                wy = 1.0 - (ry - y);
+                public void run()
+                {
+                    //System.out.println("Working on row: "+row);
+                    for(int col=0; col<cols; ++col)
+                    {
+                        //location in original
+                        double rx = col*cosa - row*sina;
+                        double ry = col*sina + row*cosa;
+                        //integer location in original
+                        int x = (int) rx;
+                        int y = (int) ry;
+                        //weights to use for picking value
+                        double wx = 1.0 - (rx - x);
+                        double wy = 1.0 - (ry - y);
 
-                val = 0.0;
-                if(x > 0 && x < cols && y > 0 && y < rows)
-                {
-                    val += wx*wy*data[y][x];
+                        double val = 0.0;
+                        if(x > 0 && x < cols && y > 0 && y < rows)
+                        {
+                            val += wx*wy*data[y][x];
+                        }
+                        if((x+1) > 0 && (x+1) < cols && y > 0 && y < rows)
+                        {
+                            val += (1.0-wx)*wy*data[y][x+1];
+                        }
+                        if(x > 0 && x < cols && (y+1) > 0 && (y+1) < rows)
+                        {
+                            val += wx*(1.0-wy)*data[y+1][x];
+                        }
+                        if((x+1) > 0 && (x+1) < cols && (y+1) > 0 && (y+1) < rows)
+                        {
+                            val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
+                        }
+                        if(val >= 0.4)
+                        {
+                            rotated.set(row, col, BLACK);
+                        }
+                        else
+                        {
+                            rotated.set(row, col, WHITE);
+                        }
+                    }
                 }
-                if((x+1) > 0 && (x+1) < cols && y > 0 && y < rows)
-                {
-                    val += (1.0-wx)*wy*data[y][x+1];
-                }
-                if(x > 0 && x < cols && (y+1) > 0 && (y+1) < rows)
-                {
-                    val += wx*(1.0-wy)*data[y+1][x];
-                }
-                if((x+1) > 0 && (x+1) < cols && (y+1) > 0 && (y+1) < rows)
-                {
-                    val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
-                }
-                if(val >= 0.4)
-                {
-                    rotated.set(row, col, BLACK);
-                }
-                else
-                {
-                    rotated.set(row, col, WHITE);
-                }
-            }
+            });
         }
+        try
+        {
+            pool.shutdown();
+            pool.awaitTermination(1000, TimeUnit.SECONDS);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        //System.out.println("Finished rotating!");
         return rotated;
     }
 
