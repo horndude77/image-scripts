@@ -78,6 +78,16 @@ public class Pbm
         return data[row][col];
     }
 
+    public int getRows()
+    {
+        return this.rows;
+    }
+
+    public int getCols()
+    {
+        return this.cols;
+    }
+
     private boolean isWhiteSpace(byte b)
     {
         return b == 0x0A || b == 0x0D || b == 0x20 || b == 0x09;
