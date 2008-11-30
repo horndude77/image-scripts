@@ -148,6 +148,21 @@ public class Pbm
             }
         }
 
+        //Skip comment
+        if(buffer[index] == 0x23)
+        {
+            while(buffer[index] != 0x0a)
+            {
+                ++index;
+                if(index == read_size)
+                {
+                    index = 0;
+                    read_size = is.read(buffer);
+                }
+            }
+            ++index;
+        }
+
         //read width
         StringBuffer sb = new StringBuffer();
         while(isDigit(buffer[index]))
@@ -244,12 +259,17 @@ public class Pbm
                         }
                     }
                 }
-                bitIndex = 0;
-                ++index;
-                if(index == read_size)
+                //If there are a few extra bits left over in the row we skip
+                //them.
+                if(bitIndex != 0)
                 {
-                    index = 0;
-                    read_size = is.read(buffer);
+                    bitIndex = 0;
+                    ++index;
+                    if(index == read_size)
+                    {
+                        index = 0;
+                        read_size = is.read(buffer);
+                    }
                 }
             }
         }
@@ -391,15 +411,19 @@ public class Pbm
     public String toString()
     {
         StringBuffer s = new StringBuffer();
-        s.append("PBM: "+cols+"x"+rows+"\n");
+        s.append("PBM: ").append(cols).append("x").append(rows);
         /*
+        s.append("\n");
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
                 s.append(data[row][col]);
             }
-            s.append("\n");
+            if(row != (rows-1))
+            {
+                s.append("\n");
+            }
         }
         */
         return s.toString();
