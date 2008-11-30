@@ -2,8 +2,14 @@ package image;
 
 import image.pnm.Pbm;
 
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class FindSkew
 {
+    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
+
     /**
      * Perform the hough transform on the image.
      *
@@ -12,18 +18,18 @@ public class FindSkew
      * @param highAngle End angle in radians.
      * @param step Step in radians.
      */
-    public static int[][] hough(Pbm image, double lowAngle, double highAngle, double step)
+    public static int[][] hough(final Pbm image, double lowAngle, double highAngle, double step)
     {
         //System.out.println("Performing hough...");
-        int rows = image.getRows();
-        int cols = image.getCols();
-        int distCount = (int) Math.sqrt(rows*rows + cols*cols);
-        int angleCount = (int) ((highAngle - lowAngle)/step);
-        int[][] h = new int[angleCount][distCount];
+        final int rows = image.getRows();
+        final int cols = image.getCols();
+        final int distCount = (int) Math.sqrt(rows*rows + cols*cols);
+        final int angleCount = (int) ((highAngle - lowAngle)/step);
+        final int[][] h = new int[angleCount][distCount];
 
         //create sin, cos tables to avoid repeated calculations.
-        double[] sinTable = new double[angleCount];
-        double[] cosTable = new double[angleCount];
+        final double[] sinTable = new double[angleCount];
+        final double[] cosTable = new double[angleCount];
         for(int i=0; i<angleCount; ++i)
         {
             double theta = i*step + lowAngle;
@@ -31,19 +37,37 @@ public class FindSkew
             cosTable[i] = Math.cos(theta);
         }
 
-        for(int row=0; row<rows; ++row)
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+
+        for(int rowc=0; rowc<rows; ++rowc)
         {
-            for(int col=0; col<cols; ++col)
+            final int row = rowc;
+            pool.execute(new Runnable()
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                public void run()
                 {
-                    for(int theta=0; theta<angleCount; ++theta)
+                    for(int col=0; col<cols; ++col)
                     {
-                        int r = (int) (col*cosTable[theta] + row*sinTable[theta]);
-                        if(r>=0) h[theta][r]++;
+                        if(image.get(row, col) == Pbm.BLACK)
+                        {
+                            for(int theta=0; theta<angleCount; ++theta)
+                            {
+                                int r = (int) (col*cosTable[theta] + row*sinTable[theta]);
+                                if(r>=0) h[theta][r]++;
+                            }
+                        }
                     }
                 }
-            }
+            });
+        }
+        try
+        {
+            pool.shutdown();
+            pool.awaitTermination(1000, TimeUnit.SECONDS);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
         }
         //System.out.println("Finished hough!");
         return h;
