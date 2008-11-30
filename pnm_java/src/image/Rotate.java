@@ -1,6 +1,7 @@
 package image;
 
 import image.pnm.Pbm;
+import image.pnm.Pgm;
 
 public class Rotate
 {
@@ -47,6 +48,43 @@ public class Rotate
                 System.err.println("Unable to write file: "+output_filename);
                 System.exit(-1);
             }
+        }
+        else if(input_filename.matches(".*\\.pgm$"))
+        {
+            Pgm image = null;
+            try
+            {
+                image = new Pgm(input_filename);
+            }
+            catch(java.io.IOException e)
+            {
+                e.printStackTrace();
+                System.err.println("Unable to read file: "+input_filename);
+                System.exit(-1);
+            }
+
+            Pgm rotated = image.centerRotate(angle);
+
+            if(!output_filename.matches(".*\\.pgm$"))
+            {
+                output_filename += ".pgm";
+            }
+
+            try
+            {
+                rotated.write(output_filename);
+            }
+            catch(java.io.IOException e)
+            {
+                e.printStackTrace();
+                System.err.println("Unable to write file: "+output_filename);
+                System.exit(-1);
+            }
+        }
+        else
+        {
+            System.err.println("Unsupported filetype: "+input_filename);
+            System.exit(-1);
         }
     }
 }

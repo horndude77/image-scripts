@@ -11,47 +11,32 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Pbm
+public class Pgm
 {
-    public static final byte BLACK = 0x01;
-    public static final byte WHITE = 0x00;
     public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     private int rows, cols;
-    private byte[][] data;
+    short maxval;
+    private short[][] data;
 
-    /*
-     * For a PBM the pixel ordering in the byte is most significant bit to 
-     * least significant bit. Therefore the first pixel would be bit 0x80.
-     */
-    private static final int[] BITS =
-    {
-        0x80,
-        0x40,
-        0x20,
-        0x10,
-        0x08,
-        0x04,
-        0x02,
-        0x01,
-    };
-    private static final byte[] MAGIC = "P4".getBytes();
-    private static final byte[] MAGIC_RAW = "P1".getBytes();
+    private static final byte[] MAGIC = "P5".getBytes();
+    private static final byte[] MAGIC_RAW = "P2".getBytes();
 
-    public Pbm(int rows, int cols)
+    public Pgm(int rows, int cols, short maxval)
     {
         this.rows = rows;
         this.cols = cols;
-        this.data = new byte[rows][cols];
+        this.maxval = maxval;
+        this.data = new short[rows][cols];
     }
 
-    public Pbm(InputStream is)
+    public Pgm(InputStream is)
         throws IOException
     {
         read(is);
     }
 
-    public Pbm(String filename)
+    public Pgm(String filename)
         throws IOException
     {
         InputStream is = null;
@@ -69,12 +54,34 @@ public class Pbm
         }
     }
 
-    public void set(int row, int col, byte val)
+    public Pbm toPbm()
+    {
+        //Simple thresholding
+        int threshold = (int) (maxval * 0.45);
+        Pbm out = new Pbm(rows, cols);
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(data[row][col] > threshold)
+                {
+                    out.set(row, col, Pbm.WHITE);
+                }
+                else
+                {
+                    out.set(row, col, Pbm.BLACK);
+                }
+            }
+        }
+        return out;
+    }
+
+    public void set(int row, int col, short val)
     {
         data[row][col] = val;
     }
 
-    public byte get(int row, int col)
+    public short get(int row, int col)
     {
         return data[row][col];
     }
@@ -170,19 +177,41 @@ public class Pbm
         }
         rows = Integer.parseInt(sb.toString());
 
+        //skip whitespace
+        while(isWhiteSpace(b))
+        {
+            b = is.read();
+        }
+
+        //read maxval
+        sb = new StringBuffer();
+        while(isDigit(b))
+        {
+            sb.append((char) b);
+            b = is.read();
+        }
+        maxval = Short.parseShort(sb.toString());
+
         //Skip a single whitespace character
         b = is.read();
 
         //read data
         b = is.read();
-        data = new byte[rows][cols];
+        data = new short[rows][cols];
         if(raw)
         {
             for(int row=0; row<rows; ++row)
             {
                 for(int col=0; col<cols; ++col)
                 {
-                    data[row][col] = (byte) b;
+                    //read pixel value
+                    sb = new StringBuffer();
+                    while(isDigit(b))
+                    {
+                        sb.append((char) b);
+                        b = is.read();
+                    }
+                    data[row][col] = Short.parseShort(sb.toString());
 
                     //skip whitespace
                     while(isWhiteSpace(b))
@@ -194,25 +223,11 @@ public class Pbm
         }
         else
         {
-            int bitIndex = 0;
             for(int row=0; row<rows; ++row)
             {
                 for(int col=0; col<cols; ++col)
                 {
-                    data[row][col] = ((b & BITS[bitIndex]) != 0) ? BLACK : WHITE;
-                    ++bitIndex;
-                    if(bitIndex == 8)
-                    {
-                        bitIndex = 0;
-                        b = is.read();
-                    }
-                }
-                //If there are a few extra bits left over in the row we skip
-                //them.
-                if(bitIndex != 0)
-                {
-                    bitIndex = 0;
-                    b = is.read();
+                    data[row][col] = (short) is.read();
                 }
             }
         }
@@ -241,49 +256,31 @@ public class Pbm
         throws IOException
     {
         //System.out.println("Writing image...");
-        os.write("P4\n".getBytes());
+        os.write("P5\n".getBytes());
         os.write((cols+" "+rows+"\n").getBytes());
+        os.write((maxval+"\n").getBytes());
 
-        byte b = 0x00;
-        int bitIndex = 0;
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                if(data[row][col] == BLACK)
-                {
-                    b |= BITS[bitIndex];
-                }
-                ++bitIndex;
-                if(bitIndex == 8)
-                {
-                    os.write(b);
-                    b = 0x00;
-                    bitIndex = 0;
-                }
-            }
-            //Fill out last byte in the row if needed.
-            if(bitIndex > 0)
-            {
-                os.write(b);
-                b = 0x00;
-                bitIndex = 0;
+                os.write(data[row][col]);
             }
         }
         //System.out.println("Finished writing!");
     }
 
-    public Pbm centerRotate(double angle_degrees)
+    public Pgm centerRotate(double angle_degrees)
     {
         return this.rotate(angle_degrees, this.cols/2.0, this.rows/2.0);
     }
 
-    public Pbm rotate(final double angle_degrees, final double cx, final double cy)
+    public Pgm rotate(final double angle_degrees, final double cx, final double cy)
     {
         ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         //System.out.println("Number of processors available: "+NUM_PROCESSORS);
 
-        final Pbm rotated = new Pbm(rows, cols);
+        final Pgm rotated = new Pgm(rows, cols, maxval);
 
         double angle = Math.toRadians(angle_degrees);
         final double sina = Math.sin(angle);
@@ -326,14 +323,7 @@ public class Pbm
                         {
                             val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
                         }
-                        if(val >= 0.4)
-                        {
-                            rotated.set(row, col, BLACK);
-                        }
-                        else
-                        {
-                            rotated.set(row, col, WHITE);
-                        }
+                        rotated.set(row, col, (short) Math.round(val));
                     }
                 }
             });
@@ -354,58 +344,8 @@ public class Pbm
     public String toString()
     {
         StringBuffer s = new StringBuffer();
-        s.append("PBM: ").append(cols).append("x").append(rows);
-        /*
-        s.append("\n");
-        for(int row=0; row<rows; ++row)
-        {
-            for(int col=0; col<cols; ++col)
-            {
-                s.append(data[row][col]);
-            }
-            if(row != (rows-1))
-            {
-                s.append("\n");
-            }
-        }
-        */
+        s.append("PGM: ").append(cols).append("x").append(rows);
         return s.toString();
-    }
-
-    public static void main(String[] args)
-        throws Exception
-    {
-        int rows = 1000;
-        int cols = 500;
-        Pbm img = new Pbm(rows, cols);
-        for(int row=0; row<rows; ++row)
-        {
-            for(int col=0; col<cols; ++col)
-            {
-                if(row == col)
-                {
-                    img.set(row, col, Pbm.BLACK);
-                }
-                if(row == rows/2)
-                {
-                    img.set(row, col, Pbm.BLACK);
-                }
-                else
-                {
-                    //img.set(row, col, Pbm.BLACK);
-                }
-            }
-        }
-        System.out.println(img);
-        System.out.println(img);
-        FileOutputStream fos = new FileOutputStream("test.pbm");
-        img.write(fos);
-
-        img = img.rotate(10.0, 0.0, 0.0);
-        System.out.println(img);
-        fos = new FileOutputStream("test_rot.pbm");
-        img.write(fos);
-        fos.close();
     }
 }
 
