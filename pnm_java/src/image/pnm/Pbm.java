@@ -315,7 +315,7 @@ public class Pbm
         return this.rotate(angle_degrees, this.cols/2.0, this.rows/2.0);
     }
 
-    public Pbm rotate(double angle_degrees, double cx, double cy)
+    public Pbm rotate(final double angle_degrees, final double cx, final double cy)
     {
         ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         //System.out.println("Number of processors available: "+NUM_PROCESSORS);
@@ -337,11 +337,11 @@ public class Pbm
                     for(int col=0; col<cols; ++col)
                     {
                         //location in original
-                        double rx = col*cosa - row*sina;
-                        double ry = col*sina + row*cosa;
+                        double rx = (col-cx)*cosa - (row-cy)*sina;
+                        double ry = (col-cx)*sina + (row-cy)*cosa;
                         //integer location in original
-                        int x = (int) rx;
-                        int y = (int) ry;
+                        int x = (int) (rx+cx);
+                        int y = (int) (ry+cy);
                         //weights to use for picking value
                         double wx = 1.0 - (rx - x);
                         double wy = 1.0 - (ry - y);
