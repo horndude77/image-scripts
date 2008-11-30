@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,16 +24,16 @@ public class Pbm
      * For a PBM the pixel ordering in the byte is most significant bit to 
      * least significant bit. Therefore the first pixel would be bit 0x80.
      */
-    private static final byte[] BITS =
+    private static final int[] BITS =
     {
-        (byte) 0x80,
-        (byte) 0x40,
-        (byte) 0x20,
-        (byte) 0x10,
-        (byte) 0x08,
-        (byte) 0x04,
-        (byte) 0x02,
-        (byte) 0x01,
+        0x80,
+        0x40,
+        0x20,
+        0x10,
+        0x08,
+        0x04,
+        0x02,
+        0x01,
     };
     private static final byte[] MAGIC = "P4".getBytes();
     private static final byte[] MAGIC_RAW = "P1".getBytes();
@@ -53,17 +54,17 @@ public class Pbm
     public Pbm(String filename)
         throws IOException
     {
-        FileInputStream fis = null;
+        InputStream is = null;
         try
         {
-            fis = new FileInputStream(filename);
-            this.read(fis);
+            is = new BufferedInputStream(new FileInputStream(filename));
+            this.read(is);
         }
         finally
         {
-            if(fis != null)
+            if(is != null)
             {
-                fis.close();
+                is.close();
             }
         }
     }
@@ -88,12 +89,12 @@ public class Pbm
         return this.cols;
     }
 
-    private boolean isWhiteSpace(byte b)
+    private boolean isWhiteSpace(int b)
     {
         return b == 0x0A || b == 0x0D || b == 0x20 || b == 0x09;
     }
 
-    private boolean isDigit(byte b)
+    private boolean isDigit(int b)
     {
         return b >= 0x30 && b <= 0x39;
     }
@@ -102,31 +103,24 @@ public class Pbm
         throws IOException
     {
         //System.out.println("Reading image...");
+
         boolean raw;
-        //Do my own buffering.
-        int buffer_size = 1024;
-        byte[] buffer = new byte[buffer_size];
-        int index = 0;
-        int read_size = is.read(buffer);
-        if(read_size < 2)
+        int b;
+
+        b = is.read();
+        if(b != (0xff & MAGIC[0]))
         {
-            throw new IOException("File ended early");
-        }
-        else
-        {
-            index = 2;
+            int m1 = b;
+            int m2 = is.read();
+            throw new IOException("Bad magic number: " + (char) m1 + "" + (char) m2);
         }
 
-        if(buffer[0] != MAGIC[0])
-        {
-            throw new IOException("Bad magic number: " + (char) buffer[0] + "" + (char) buffer[1]);
-        }
-
-        if(buffer[1] == MAGIC[1])
+        b = is.read();
+        if(b == (0xff & MAGIC[1]))
         {
             raw = false;
         }
-        else if(buffer[1] == MAGIC_RAW[1])
+        else if(b == (0xff & MAGIC_RAW[1]))
         {
             raw = true;
         }
@@ -136,104 +130,64 @@ public class Pbm
         }
 
         //skip whitespace
-        //TODO: I'm doing this a lot. Fix it! Really I just need a buffered
-        //input stream that lets me go back one character.
-        while(isWhiteSpace(buffer[index]))
+        b = is.read();
+        while(isWhiteSpace(b))
         {
-            ++index;
-            if(index == read_size)
-            {
-                index = 0;
-                read_size = is.read(buffer);
-            }
+            b = is.read();
         }
 
         //Skip comment
-        if(buffer[index] == 0x23)
+        if(b == 0x23)
         {
-            while(buffer[index] != 0x0a)
+            while(b != 0x0a)
             {
-                ++index;
-                if(index == read_size)
-                {
-                    index = 0;
-                    read_size = is.read(buffer);
-                }
+                b = is.read();
             }
-            ++index;
+            b = is.read();
         }
 
         //read width
         StringBuffer sb = new StringBuffer();
-        while(isDigit(buffer[index]))
+        while(isDigit(b))
         {
-            sb.append((char) buffer[index]);
-            ++index;
-            if(index == read_size)
-            {
-                index = 0;
-                read_size = is.read(buffer);
-            }
+            sb.append((char) b);
+            b = is.read();
         }
         cols = Integer.parseInt(sb.toString());
 
         //skip whitespace
-        while(isWhiteSpace(buffer[index]))
+        while(isWhiteSpace(b))
         {
-            ++index;
-            if(index == read_size)
-            {
-                index = 0;
-                read_size = is.read(buffer);
-            }
+            b = is.read();
         }
 
         //read height
         sb = new StringBuffer();
-        while(isDigit(buffer[index]))
+        while(isDigit(b))
         {
-            sb.append((char) buffer[index]);
-            ++index;
-            if(index == read_size)
-            {
-                index = 0;
-                read_size = is.read(buffer);
-            }
+            sb.append((char) b);
+            b = is.read();
         }
         rows = Integer.parseInt(sb.toString());
 
         //Skip a single whitespace character
-        ++index;
-        if(index == read_size)
-        {
-            index = 0;
-            read_size = is.read(buffer);
-        }
+        b = is.read();
 
         //read data
+        b = is.read();
+        data = new byte[rows][cols];
         if(raw)
         {
             for(int row=0; row<rows; ++row)
             {
                 for(int col=0; col<cols; ++col)
                 {
-                    data[row][col] = buffer[index];
-                    ++index;
-                    if(index == read_size)
-                    {
-                        index = 0;
-                        read_size = is.read(buffer);
-                    }
+                    data[row][col] = (byte) b;
 
                     //skip whitespace
-                    while(isWhiteSpace(buffer[index]))
+                    while(isWhiteSpace(b))
                     {
-                        ++index;
-                        if(index == read_size)
-                        {
-                            index = 0;
-                            read_size = is.read(buffer);
-                        }
+                        b = is.read();
                     }
                 }
             }
@@ -241,22 +195,16 @@ public class Pbm
         else
         {
             int bitIndex = 0;
-            data = new byte[rows][cols];
             for(int row=0; row<rows; ++row)
             {
                 for(int col=0; col<cols; ++col)
                 {
-                    data[row][col] = ((buffer[index] & BITS[bitIndex]) != 0) ? BLACK : WHITE;
+                    data[row][col] = ((b & BITS[bitIndex]) != 0) ? BLACK : WHITE;
                     ++bitIndex;
                     if(bitIndex == 8)
                     {
                         bitIndex = 0;
-                        ++index;
-                        if(index == read_size)
-                        {
-                            index = 0;
-                            read_size = is.read(buffer);
-                        }
+                        b = is.read();
                     }
                 }
                 //If there are a few extra bits left over in the row we skip
@@ -264,12 +212,7 @@ public class Pbm
                 if(bitIndex != 0)
                 {
                     bitIndex = 0;
-                    ++index;
-                    if(index == read_size)
-                    {
-                        index = 0;
-                        read_size = is.read(buffer);
-                    }
+                    b = is.read();
                 }
             }
         }

@@ -9,6 +9,7 @@ public class Rotate
         if(args.length < 3)
         {
             System.out.println("Usage: image.Rotate <angle in degrees> <input filename> <output filename>");
+            System.exit(-1);
         }
 
         double angle = Double.parseDouble(args[0]);

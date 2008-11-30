@@ -16,7 +16,7 @@ public class Deskew
         String output_filename = args[1];
         Pbm image = new Pbm(input_filename);
         double angleDegrees = FindSkew.findSkew(image);
-        Pbm rotated = image.centerRotate(angleDegrees);
+        Pbm rotated = image.centerRotate(-angleDegrees);
         rotated.write(output_filename);
     }
 }

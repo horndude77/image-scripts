@@ -93,7 +93,7 @@ public class FindSkew
             }
         }
         //System.out.println("Found max angle!");
-        return maxTheta*step + lowAngle;
+        return -(maxTheta*step + lowAngle);
     }
 
     public static void main(String[] args)

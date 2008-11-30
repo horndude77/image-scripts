@@ -102,6 +102,7 @@ public class SubImageRemoval
         if(args.length < 3)
         {
             System.out.println("Usage: image.SubImageRemoval <main image filename> <sub-image filename> <output filename>");
+            System.exit(-1);
         }
 
         String mainFilename = args[0];
