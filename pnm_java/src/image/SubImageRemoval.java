@@ -2,8 +2,14 @@ package image;
 
 import image.pnm.Pbm;
 
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class SubImageRemoval
 {
+    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
+
     public static void blankRectangle(Pbm image, int rowStart, int colStart, int rows, int cols)
     {
         for(int row=0; row<rows; ++row)
@@ -63,61 +69,105 @@ public class SubImageRemoval
         return score;
     }
 
-    public static int[] findImage(Pbm main, Pbm sub)
+    public static int[] findImage(final Pbm main, final Pbm sub, final int startRow, final int rowCount, final int startCol, final int colCount, final int cutoff)
     {
-        int rows = main.getRows();
-        int cols = main.getCols();
+        final int rows = main.getRows();
+        final int cols = main.getCols();
 
         int bestRow = -1;
         int bestCol = -1;
-        int bestScore = Integer.MAX_VALUE;
+        int bestScore = cutoff;
+        System.out.println(bestScore);
+        //Lame. Gets around 'final' restriction when using inner classes.
+        final int[] best = new int[]{bestRow, bestCol, bestScore};
 
-        int goodEnough = 100;
+        final int goodEnough = 100;
 
-        outer:
-        for(int row=0; row<rows && row<50; ++row)
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        final Object lock = new Object();
+
+        //Lame. See above.
+        final boolean[] looping = new boolean[]{true};
+
+        for(int rowc=startRow; rowc<startRow+rowCount && looping[0]; ++rowc)
         {
-            for(int col=0; col<cols; ++col)
+            final int row = rowc;
+            pool.execute(new Runnable()
             {
-                int score = scoreSection(main, sub, row, col, bestScore);
-                if(score < bestScore)
+                public void run()
                 {
-                    System.out.println("New best score: "+score+" - ("+row+", "+col+")");
-                    bestScore = score;
-                    bestRow = row;
-                    bestCol = col;
+                    for(int col=startCol; col<startCol+colCount && looping[0]; ++col)
+                    {
+                        int score = scoreSection(main, sub, row, col, best[2]);
+                        if(score < best[2])
+                        {
+                            System.out.println("New best score: "+score+" - ("+row+", "+col+")");
+                            synchronized(lock)
+                            {
+                                best[0] = row;
+                                best[1] = col;
+                                best[2] = score;
+                            }
+                        }
+                        if(score < goodEnough)
+                        {
+                            looping[0] = false;
+                        }
+                    }
                 }
-                if(score < goodEnough)
-                {
-                    break outer;
-                }
-            }
+            });
         }
-        return new int[] {bestRow, bestCol,};
+        try
+        {
+            pool.shutdown();
+            pool.awaitTermination(1000, TimeUnit.SECONDS);
+        }
+        catch(InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+        return new int[] {best[0], best[1]};
     }
 
     public static void main(String args[])
         throws Exception
     {
-        if(args.length < 3)
+        if(args.length < 9)
         {
-            System.out.println("Usage: image.SubImageRemoval <main image filename> <sub-image filename> <output filename>");
+            System.out.println("Usage: image.SubImageRemoval <main image filename> <sub-image filename> <output filename> <percent close> <start row> <rows to search> <start column> <columns to search> <removal method>");
             System.exit(-1);
         }
 
         String mainFilename = args[0];
         String subFilename = args[1];
         String outFilename = args[2];
+        double cutoffPercentage = Double.parseDouble(args[3]);
+        int startRow = Integer.parseInt(args[4]);
+        int rowCount = Integer.parseInt(args[5]);
+        int startCol = Integer.parseInt(args[6]);
+        int colCount = Integer.parseInt(args[7]);
+        String removalMethod = args[8];
 
         Pbm main = new Pbm(mainFilename);
         Pbm sub = new Pbm(subFilename);
-        System.out.println(main);
-        System.out.println(sub);
 
-        int[] pos = findImage(main, sub);
-        System.out.println("Loc: "+pos[0]+", "+pos[1]);
-        invertSubImage(main, sub, pos[0], pos[1]);
-        //blankRectangle(main, pos[0], pos[1], sub.getRows(), sub.getCols());
+        //-1 indicated full range or default for these arguments.
+        rowCount = (rowCount == -1) ? main.getRows() : rowCount;
+        colCount = (colCount == -1) ? main.getCols() : colCount;
+
+        int cutoff = (int) ( (cutoffPercentage/100.0) * sub.getRows() * sub.getCols());
+
+        main.write(mainFilename+"test.pbm");
+
+        int[] pos = findImage(main, sub, startRow, rowCount, startCol, colCount, cutoff);
+        if("invert_logo".equals(removalMethod))
+        {
+            invertSubImage(main, sub, pos[0], pos[1]);
+        }
+        else if("blank_rectangle".equals(removalMethod))
+        {
+            blankRectangle(main, pos[0], pos[1], sub.getRows(), sub.getCols());
+        }
         main.write(outFilename);
     }
 }

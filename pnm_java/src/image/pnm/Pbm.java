@@ -174,7 +174,6 @@ public class Pbm
         b = is.read();
 
         //read data
-        b = is.read();
         data = new byte[rows][cols];
         if(raw)
         {
@@ -375,8 +374,8 @@ public class Pbm
     public static void main(String[] args)
         throws Exception
     {
-        int rows = 1000;
-        int cols = 500;
+        int rows = 701;
+        int cols = 701;
         Pbm img = new Pbm(rows, cols);
         for(int row=0; row<rows; ++row)
         {
@@ -396,16 +395,11 @@ public class Pbm
                 }
             }
         }
-        System.out.println(img);
-        System.out.println(img);
-        FileOutputStream fos = new FileOutputStream("test.pbm");
-        img.write(fos);
-
-        img = img.rotate(10.0, 0.0, 0.0);
-        System.out.println(img);
-        fos = new FileOutputStream("test_rot.pbm");
-        img.write(fos);
-        fos.close();
+        img.write("test.pbm");
+        img = img.centerRotate(10.0);
+        img.write("test_rot.pbm");
+        Pbm read = new Pbm("test.pbm");
+        read.write("test2.pbm");
     }
 }
 
