@@ -1,0 +1,32 @@
+#!/bin/bash
+#Deskews all b&w images in input pdf.
+#
+#Does not work with color/grayscale images yet.
+#
+
+PDF=$1
+SCRIPT_DIR=`dirname $0`
+PREFIX=prefix
+
+pdfimages $PDF $PREFIX
+
+for i in $PREFIX*.pbm
+do
+    echo $i
+    #clean image, make 10x13 @ 300dpi
+    convert $i -negate -background white -gravity center -extent 3000x3900 $i
+
+    #deskew
+    $SCRIPT_DIR/deskew $i rot_$i
+
+    #convert to 300dpi tiff
+    convert rot_$i -density 300 -units PixelsPerInch -compress group4 ${i%.pbm}.tiff
+done
+
+#create pdf file
+OUT_TIFF=${PDF%.pdf}.tiff
+OUT_PDF=${PDF%.pdf}_out.pdf
+tiffcp $PREFIX*.tiff $OUT_TIFF
+tiff2pdf $OUT_TIFF -t ${PDF%.pdf} -z -o $OUT_PDF
+rm $PREFIX*.pbm $PREFIX*.tiff rot_$PREFIX*.pbm
+
