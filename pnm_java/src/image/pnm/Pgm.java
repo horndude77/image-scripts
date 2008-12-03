@@ -56,8 +56,140 @@ public class Pgm
 
     public Pbm toPbm()
     {
+        return RunningAverageAdaptiveThreshold(75, 0.75);
+        //return GlobalThreshold(0.45);
+    }
+
+    /**
+     * Computes the threshold function based on running averages. The running
+     * averages of each row going left to right and right to left, and each
+     * column going top to bottom and bottom to top are computed. These four
+     * values are averaged at each pixel. The result is a descent adaptive
+     * threshold.
+     *
+     * A short coming occurs at the intersection of horizontal and vertical
+     * lines. The running average has seen black long enough to sometime make
+     * these intersections white.
+     *
+     * @param averageLength Length of running average.
+     * @param percentageOfThreshold Percentage of the average where the threshold is set.
+     */
+    private Pbm RunningAverageAdaptiveThreshold(int averageLength, double percentageOfThreshold)
+    {
+        double divisor = 6.0;
+        double[][] threshold = new double[rows][cols];
+        double avg;
+        //horizontal
+        for(int row=0; row<rows; ++row)
+        {
+            //left to right
+            avg = maxval/2.0;
+            for(int col=0; col<cols; ++col)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+
+            //right to left
+            avg = maxval/2.0;
+            for(int col=cols-1; col>=0; --col)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+        }
+        //vertical
+        for(int col=0; col<cols; ++col)
+        {
+            //top to bottom
+            avg = maxval/2.0;
+            for(int row=0; row<rows; ++row)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+
+            //bottom to top
+            avg = maxval/2.0;
+            for(int row=rows-1; row>=0; --row)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+        }
+
+        //diagonals
+        int drow=rows-1;
+        int dcol=0;
+        while(drow != 0 && dcol<cols)
+        {
+            //down
+            avg = maxval/2.0;
+            for(int row=drow, col=dcol; row<rows && col<cols; row+=1, col+=1)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+
+            //TODO: reverse direction
+
+            if(drow == 0)
+            {
+                dcol += 1;
+            }
+            else
+            {
+                drow -= 1;
+            }
+        }
+
+        drow=rows-1;
+        dcol=cols-1;
+        while(drow != 0 && dcol<cols)
+        {
+            //up
+            avg = maxval/2.0;
+            for(int row=drow, col=dcol; row>0 && col<cols; row-=1, col+=1)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
+
+            //TODO: reverse direction
+
+            if(dcol == 0)
+            {
+                drow -= 1;
+            }
+            else
+            {
+                dcol -= 1;
+            }
+        }
+
+        //compute binary image.
+        Pbm out = new Pbm(rows, cols);
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(data[row][col] > 0.85*threshold[row][col])
+                {
+                    out.set(row, col, Pbm.WHITE);
+                }
+                else
+                {
+                    out.set(row, col, Pbm.BLACK);
+                }
+            }
+        }
+        return out;
+    }
+
+    private Pbm GlobalThreshold(double thresholdReal)
+    {
         //Simple thresholding
-        int threshold = (int) (maxval * 0.45);
+        int threshold = (int) (maxval * thresholdReal);
         Pbm out = new Pbm(rows, cols);
         for(int row=0; row<rows; ++row)
         {

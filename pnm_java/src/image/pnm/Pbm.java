@@ -350,6 +350,46 @@ public class Pbm
         return rotated;
     }
 
+    /**
+     * Clean some noise from the image.
+     */
+    public void clean()
+    {
+        //Find and invert lonely pixels
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                int surrounding = 0;
+                if(row > 0)
+                {
+                    surrounding += data[row-1][col];
+                }
+                if(row < rows-1)
+                {
+                    surrounding += data[row+1][col];
+                }
+                if(col > 0)
+                {
+                    surrounding += data[row][col-1];
+                }
+                if(col < cols-1)
+                {
+                    surrounding += data[row][col+1];
+                }
+
+                if(data[row][col] == Pbm.BLACK && surrounding == 0)
+                {
+                    data[row][col] = Pbm.WHITE;
+                }
+                else if(data[row][col] == Pbm.WHITE && surrounding == 4)
+                {
+                    data[row][col] = Pbm.WHITE;
+                }
+            }
+        }
+    }
+
     public String toString()
     {
         StringBuffer s = new StringBuffer();
