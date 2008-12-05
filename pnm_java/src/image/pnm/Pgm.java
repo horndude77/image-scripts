@@ -1,5 +1,6 @@
 package image.pnm;
 
+import image.util.ArrayUtil;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -56,10 +57,52 @@ public class Pgm
 
     public Pbm toPbm()
     {
-        //Pbm out = RunningAverageAdaptiveThreshold(30, 0.75);
+        //Pbm out = RunningAverageAdaptiveThreshold(30, 0.88);
         //Pbm out = GlobalThreshold(0.45);
-        Pbm out = NiblackThreshold(31, -0.2);
-        postProcess(out, 75);
+        //Pbm out = NiblackThreshold(75, -0.3);
+        Pbm out = BernsenThreshold(75, 15);
+        postProcess(out, 100);
+        return out;
+    }
+
+    public Pbm BernsenThreshold(int neighborhood, int l)
+    {
+        System.out.println("Applying Bernsen thresholding...");
+        int n = (neighborhood-1)/2;
+        Pbm out = new Pbm(rows, cols);
+        short[][] max = ArrayUtil.maxNeighborhoods(data, neighborhood);
+        short[][] min = ArrayUtil.minNeighborhoods(data, neighborhood);
+        for(int row=0; row<rows; ++row)
+        {
+            //System.out.println("row: "+row);
+            for(int col=0; col<cols; ++col)
+            {
+                int high = max[row][col];
+                int low = min[row][col];
+                if( (high - low) < l )
+                {
+                    //This indicates that the block is uniform. For now assume
+                    //white background.
+                    //System.out.println("Uniform section: " + (high-low) + " < " + l);
+                    out.set(row, col, Pbm.WHITE);
+                }
+                else
+                {
+                    int threshold = (int) ((high+low)*0.4);
+                    //System.out.println(threshold + " < " + data[row][col]);
+                    if(data[row][col] > threshold)
+                    {
+                        //System.out.println("\tWHITE");
+                        out.set(row, col, Pbm.WHITE);
+                    }
+                    else
+                    {
+                        //System.out.println("\tBLACK");
+                        out.set(row, col, Pbm.BLACK);
+                    }
+                }
+            }
+        }
         return out;
     }
 
@@ -79,7 +122,8 @@ public class Pgm
      */
     private Pbm RunningAverageAdaptiveThreshold(int averageLength, double percentageOfThreshold)
     {
-        double divisor = 6.0;
+        System.out.println("Calculating Running Average thresholding...");
+        double divisor = 8.0;
         double[][] threshold = new double[rows][cols];
         double avg;
         //horizontal
@@ -128,13 +172,19 @@ public class Pgm
         {
             //down
             avg = maxval/2.0;
-            for(int row=drow, col=dcol; row<rows && col<cols; row+=1, col+=1)
+            int row, col;
+            for(row=drow, col=dcol; row<rows && col<cols; row+=1, col+=1)
             {
                 avg = avg - (avg - data[row][col])/averageLength;
                 threshold[row][col] += avg/divisor;
             }
 
-            //TODO: reverse direction
+            avg = maxval/2.0;
+            for(; row<rows && col<cols; row-=1, col-=1)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
 
             if(drow == 0)
             {
@@ -152,13 +202,19 @@ public class Pgm
         {
             //up
             avg = maxval/2.0;
-            for(int row=drow, col=dcol; row>0 && col<cols; row-=1, col+=1)
+            int row, col;
+            for(row=drow, col=dcol; row>0 && col<cols; row-=1, col+=1)
             {
                 avg = avg - (avg - data[row][col])/averageLength;
                 threshold[row][col] += avg/divisor;
             }
 
-            //TODO: reverse direction
+            avg = maxval/2.0;
+            for(; row>0 && col<cols; row+=1, col-=1)
+            {
+                avg = avg - (avg - data[row][col])/averageLength;
+                threshold[row][col] += avg/divisor;
+            }
 
             if(dcol == 0)
             {
@@ -170,13 +226,14 @@ public class Pgm
             }
         }
 
+        System.out.println("Applying Running Average thresholding...");
         //compute binary image.
         Pbm out = new Pbm(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                if(data[row][col] > 0.85*threshold[row][col])
+                if(data[row][col] > percentageOfThreshold*threshold[row][col])
                 {
                     out.set(row, col, Pbm.WHITE);
                 }
@@ -217,44 +274,19 @@ public class Pgm
      */
     private Pbm NiblackThreshold(int boxSize, double k)
     {
-        //TODO: speed up!
-        int n = (boxSize-1)/2;
-        int count = boxSize*boxSize;
+        System.out.println("Calculating Niblack thresholding...");
+        double[][] dataFloat = ArrayUtil.toDoubleArray(data);
+        double[][] mean = ArrayUtil.meanNeighborhood(dataFloat, boxSize);
+        double[][] stdev = ArrayUtil.stdevNeighborhood(dataFloat, boxSize);
+        double[][] threshold = ArrayUtil.add(mean, ArrayUtil.multiplyEach(stdev, k));
+
+        System.out.println("Applying Niblack thresholding...");
         Pbm out = new Pbm(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                double mean = 0.0;
-
-                int lowRow = Math.max(0, row-n);
-                int lowCol = Math.max(0, col-n);
-                int highRow = Math.min(rows-1, row+n);
-                int highCol = Math.min(cols-1, col+n);
-
-                for(int irow=lowRow; irow<=highRow; ++irow)
-                {
-                    for(int icol=lowCol; icol<=highCol; ++icol)
-                    {
-                        mean += data[irow][icol];
-                    }
-                }
-                mean = mean/count;
-
-                double stdev = 0x0;
-                for(int irow=lowRow; irow<=highRow; ++irow)
-                {
-                    for(int icol=lowCol; icol<=highCol; ++icol)
-                    {
-                        double val = data[irow][icol] - mean;
-                        stdev += val*val;
-                    }
-                }
-                stdev = Math.sqrt(stdev/count);
-
-                double threshold = mean + k*stdev;
-
-                if(data[row][col] > threshold)
+                if(data[row][col] > threshold[row][col])
                 {
                     out.set(row, col, Pbm.WHITE);
                 }
@@ -270,12 +302,17 @@ public class Pgm
 
     public void postProcess(Pbm out, double energyThreshold)
     {
+        System.out.println("Post-process...");
         Pgm sobel = this.sobel();
-        for(int row=0; row<rows; ++row)
+        //System.out.println("Sobel average: "+ArrayUtil.mean(sobel.getData()));
+        boolean backup = false;
+        for(int row=0; row<rows;++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                if(out.get(row, col) == Pbm.BLACK)
+                byte pixelInverse = out.get(row, col) == Pbm.BLACK ? Pbm.WHITE : Pbm.BLACK;
+                int countThreshold = pixelInverse == Pbm.BLACK ? 5 : 4;
+                //if(out.get(row, col) == Pbm.BLACK)
                 {
                     //count surrounding black pixels
                     int lowRow = Math.max(0, row-1);
@@ -288,19 +325,27 @@ public class Pgm
                     {
                         for(int icol=lowCol; icol<=highCol; ++icol)
                         {
-                            if(out.get(irow, icol) == Pbm.WHITE)
+                            if(out.get(irow, icol) == pixelInverse)
                             {
                                 count += 1;
                             }
                         }
                     }
-                    if(count >= 4 && sobel.get(row, col) < energyThreshold)
+                    if(count >= countThreshold && sobel.get(row, col) < energyThreshold)
                     {
-                        out.set(row, col, Pbm.WHITE);
+                        out.set(row, col, pixelInverse);
+                        backup = true;
+                        //System.out.println("Changed pixel: ("+row+", "+col+")");
                         //if(row > 0) --row;
-                        //if(col > 0) --col;
+                        if(col > 0) col-=2;
                     }
                 }
+            }
+            if(backup)
+            {
+                //System.out.println("Backing Up (row: "+row+")");
+                row-=2;
+                backup = false;
             }
         }
     }
@@ -335,6 +380,11 @@ public class Pgm
     public int getCols()
     {
         return this.cols;
+    }
+
+    public short[][] getData()
+    {
+        return this.data;
     }
 
     private boolean isWhiteSpace(int b)
