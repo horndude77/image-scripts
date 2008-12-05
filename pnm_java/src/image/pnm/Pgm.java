@@ -57,8 +57,16 @@ public class Pgm
 
     public Pbm toPbm(Thresholder thresholder)
     {
+        return toPbm(thresholder, false, 0.0);
+    }
+
+    public Pbm toPbm(Thresholder thresholder, boolean postprocess, double energyThreshold)
+    {
         Pbm out = thresholder.threshold(this);
-        postProcess(out, 100);
+        if(postprocess)
+        {
+            postProcess(out, energyThreshold);
+        }
         return out;
     }
 
@@ -106,7 +114,7 @@ public class Pgm
             if(backup)
             {
                 //System.out.println("Backing Up (row: "+row+")");
-                row-=2;
+                if(row > 0) row-=2;
                 backup = false;
             }
         }
@@ -339,6 +347,7 @@ public class Pgm
         //System.out.println("Number of processors available: "+NUM_PROCESSORS);
 
         final Pgm rotated = new Pgm(rows, cols, maxval);
+        final short defaultBackground = maxval;
 
         double angle = Math.toRadians(angle_degrees);
         final double sina = Math.sin(angle);
@@ -369,18 +378,38 @@ public class Pgm
                         {
                             val += wx*wy*data[y][x];
                         }
+                        else
+                        {
+                            val += wx*wy*defaultBackground;
+                        }
+
                         if((x+1) > 0 && (x+1) < cols && y > 0 && y < rows)
                         {
                             val += (1.0-wx)*wy*data[y][x+1];
                         }
+                        else
+                        {
+                            val += (1.0-wx)*wy*defaultBackground;
+                        }
+
                         if(x > 0 && x < cols && (y+1) > 0 && (y+1) < rows)
                         {
                             val += wx*(1.0-wy)*data[y+1][x];
                         }
+                        else
+                        {
+                            val += wx*(1.0-wy)*defaultBackground;
+                        }
+
                         if((x+1) > 0 && (x+1) < cols && (y+1) > 0 && (y+1) < rows)
                         {
                             val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
                         }
+                        else
+                        {
+                            val += (1.0-wx)*(1.0-wy)*defaultBackground;
+                        }
+
                         rotated.set(row, col, (short) Math.round(val));
                     }
                 }
