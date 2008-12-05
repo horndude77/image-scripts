@@ -15,7 +15,10 @@ public class PgmToPbm
         String outputPbm = args[1];
 
         Pgm in = new Pgm(inputPgm);
-        Pbm out = in.toPbm();
+        //Pbm out = in.toPbm(new GlobalThresholder(0.45));
+        //Pbm out = in.toPbm(new BernsenThresholder(75, 15));
+        //Pbm out = in.toPbm(new NiblackThresholder(75, -0.3));
+        Pbm out = in.toPbm(new RunningAverageThresholder(30, 0.88));
         out.clean();
         out.write(outputPbm);
     }

@@ -2,6 +2,7 @@ package image;
 
 import image.pnm.Pbm;
 import image.pnm.Pgm;
+import image.pnm.GlobalThresholder;
 
 public class Deskew
 {
@@ -26,7 +27,7 @@ public class Deskew
         else if(input_filename.matches(".*\\.pgm$"))
         {
             Pgm image = new Pgm(input_filename);
-            Pbm bwImage = image.toPbm();
+            Pbm bwImage = image.toPbm(new GlobalThresholder(0.45));
             double angleDegrees = FindSkew.findSkew(bwImage);
             Pgm rotated = image.centerRotate(-angleDegrees);
             rotated.write(output_filename);
