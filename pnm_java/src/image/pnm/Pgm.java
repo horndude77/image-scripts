@@ -56,8 +56,11 @@ public class Pgm
 
     public Pbm toPbm()
     {
-        return RunningAverageAdaptiveThreshold(75, 0.75);
-        //return GlobalThreshold(0.45);
+        //Pbm out = RunningAverageAdaptiveThreshold(30, 0.75);
+        //Pbm out = GlobalThreshold(0.45);
+        Pbm out = NiblackThreshold(31, -0.2);
+        postProcess(out, 75);
+        return out;
     }
 
     /**
@@ -121,7 +124,7 @@ public class Pgm
         //diagonals
         int drow=rows-1;
         int dcol=0;
-        while(drow != 0 && dcol<cols)
+        while(dcol<cols)
         {
             //down
             avg = maxval/2.0;
@@ -145,7 +148,7 @@ public class Pgm
 
         drow=rows-1;
         dcol=cols-1;
-        while(drow != 0 && dcol<cols)
+        while(drow > 0)
         {
             //up
             avg = maxval/2.0;
@@ -208,6 +211,100 @@ public class Pgm
         return out;
     }
 
+    /**
+     * @param boxSize The size of the box to use for the local threshold. Must be odd.
+     * @param k Coefficient for the standard deviation.
+     */
+    private Pbm NiblackThreshold(int boxSize, double k)
+    {
+        //TODO: speed up!
+        int n = (boxSize-1)/2;
+        int count = boxSize*boxSize;
+        Pbm out = new Pbm(rows, cols);
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                double mean = 0.0;
+
+                int lowRow = Math.max(0, row-n);
+                int lowCol = Math.max(0, col-n);
+                int highRow = Math.min(rows-1, row+n);
+                int highCol = Math.min(cols-1, col+n);
+
+                for(int irow=lowRow; irow<=highRow; ++irow)
+                {
+                    for(int icol=lowCol; icol<=highCol; ++icol)
+                    {
+                        mean += data[irow][icol];
+                    }
+                }
+                mean = mean/count;
+
+                double stdev = 0x0;
+                for(int irow=lowRow; irow<=highRow; ++irow)
+                {
+                    for(int icol=lowCol; icol<=highCol; ++icol)
+                    {
+                        double val = data[irow][icol] - mean;
+                        stdev += val*val;
+                    }
+                }
+                stdev = Math.sqrt(stdev/count);
+
+                double threshold = mean + k*stdev;
+
+                if(data[row][col] > threshold)
+                {
+                    out.set(row, col, Pbm.WHITE);
+                }
+                else
+                {
+                    out.set(row, col, Pbm.BLACK);
+                }
+            }
+        }
+
+        return out;
+    }
+
+    public void postProcess(Pbm out, double energyThreshold)
+    {
+        Pgm sobel = this.sobel();
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(out.get(row, col) == Pbm.BLACK)
+                {
+                    //count surrounding black pixels
+                    int lowRow = Math.max(0, row-1);
+                    int lowCol = Math.max(0, col-1);
+                    int highRow = Math.min(rows-1, row+1);
+                    int highCol = Math.min(cols-1, col+1);
+
+                    int count = 0;
+                    for(int irow=lowRow; irow<=highRow; ++irow)
+                    {
+                        for(int icol=lowCol; icol<=highCol; ++icol)
+                        {
+                            if(out.get(irow, icol) == Pbm.WHITE)
+                            {
+                                count += 1;
+                            }
+                        }
+                    }
+                    if(count >= 4 && sobel.get(row, col) < energyThreshold)
+                    {
+                        out.set(row, col, Pbm.WHITE);
+                        //if(row > 0) --row;
+                        //if(col > 0) --col;
+                    }
+                }
+            }
+        }
+    }
+
     public void set(int row, int col, short val)
     {
         data[row][col] = val;
@@ -216,6 +313,18 @@ public class Pgm
     public short get(int row, int col)
     {
         return data[row][col];
+    }
+
+    public short getZeroWhenOutOfRange(int row, int col)
+    {
+        if(row < 0 || row >= rows || col < 0 || col >= cols)
+        {
+            return 0;
+        }
+        else
+        {
+            return data[row][col];
+        }
     }
 
     public int getRows()
@@ -471,6 +580,36 @@ public class Pgm
         }
         //System.out.println("Finished rotating!");
         return rotated;
+    }
+
+    public Pgm sobel()
+    {
+        double outer = 1.0;
+        double center = 2.0;
+        Pgm out = new Pgm(rows, cols, maxval);
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                double gx = 0.0;
+                double gy = 0.0;
+                gx += center*getZeroWhenOutOfRange(row, col-1);
+                gx += outer*getZeroWhenOutOfRange(row+1, col-1);
+                gx += outer*getZeroWhenOutOfRange(row-1, col-1);
+                gx -= center*getZeroWhenOutOfRange(row, col+1);
+                gx -= outer*getZeroWhenOutOfRange(row+1, col+1);
+                gx -= outer*getZeroWhenOutOfRange(row-1, col+1);
+                gy += center*getZeroWhenOutOfRange(row-1, col);
+                gy += outer*getZeroWhenOutOfRange(row-1, col-1);
+                gy += outer*getZeroWhenOutOfRange(row-1, col+1);
+                gy -= center*getZeroWhenOutOfRange(row+1, col);
+                gy -= outer*getZeroWhenOutOfRange(row+1, col-1);
+                gy -= outer*getZeroWhenOutOfRange(row+1, col+1);
+                double val = Math.sqrt(gx*gx + gy*gy);
+                out.set(row, col, (short) val);
+            }
+        }
+        return out;
     }
 
     public String toString()
