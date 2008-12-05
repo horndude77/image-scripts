@@ -67,21 +67,43 @@ public class ArrayUtil
         int rows = image.length;
         int cols = image[0].length;
         short[][] minx = new short[rows][cols];
+        int index = -1;
+        short minVal = 0x7fff;
 
         //mins in x direction
         for(int row=0; row<rows; ++row)
         {
+            minVal = 0x7fff;
+            for(int i=0; i<=n; ++i)
+            {
+                short val = image[row][i];
+                if(val < minVal)
+                {
+                    index = i;
+                    minVal = val;
+                }
+            }
+
             for(int col=0; col<cols; ++col)
             {
                 int low = Math.max(0, col-n);
                 int high = Math.min(cols-1, col+n);
-                short minVal = 0x7fff;
-                for(int i=low; i<=high; ++i)
+                if(image[row][high] < minVal)
                 {
-                    short val = image[row][i];
-                    if(val < minVal)
+                    index = high;
+                    minVal = image[row][high];
+                }
+                else if(index == low-1)
+                {
+                    minVal = 0x7fff;
+                    for(int i=low; i<=high; ++i)
                     {
-                        minVal = val;
+                        short val = image[row][i];
+                        if(val < minVal)
+                        {
+                            index = i;
+                            minVal = val;
+                        }
                     }
                 }
                 minx[row][col] = minVal;
@@ -91,19 +113,39 @@ public class ArrayUtil
         short[][] min = new short[rows][cols];
 
         //mins of minx in y direction
-        for(int row=0; row<rows; ++row)
+        for(int col=0; col<cols; ++col)
         {
-            for(int col=0; col<cols; ++col)
+            minVal = 0x7fff;
+            for(int i=0; i<=n; ++i)
+            {
+                short val = minx[i][col];
+                if(val < minVal)
+                {
+                    index = i;
+                    minVal = val;
+                }
+            }
+
+            for(int row=0; row<rows; ++row)
             {
                 int low = Math.max(0, row-n);
                 int high = Math.min(rows-1, row+n);
-                short minVal = 0x7fff;
-                for(int i=low; i<=high; ++i)
+                if(minx[high][col] < minVal)
                 {
-                    short val = minx[i][col];
-                    if(val < minVal)
+                    index = high;
+                    minVal = minx[high][col];
+                }
+                else if(index == low-1)
+                {
+                    minVal = 0x7fff;
+                    for(int i=low; i<=high; ++i)
                     {
-                        minVal = val;
+                        short val = minx[i][col];
+                        if(val < minVal)
+                        {
+                            index = i;
+                            minVal = val;
+                        }
                     }
                 }
                 min[row][col] = minVal;
@@ -118,21 +160,44 @@ public class ArrayUtil
         int rows = image.length;
         int cols = image[0].length;
         short[][] maxx = new short[rows][cols];
+        int index = -1;
+        short maxVal = -1;
 
         //maxes in x direction
         for(int row=0; row<rows; ++row)
         {
+            maxVal = -1;
+            for(int i=0; i<=n; ++i)
+            {
+                short val = image[row][i];
+                if(val > maxVal)
+                {
+                    index = i;
+                    maxVal = val;
+                }
+            }
+
             for(int col=0; col<cols; ++col)
             {
                 int low = Math.max(0, col-n);
                 int high = Math.min(cols-1, col+n);
-                short maxVal = -1;
-                for(int i=low; i<=high; ++i)
+                if(image[row][high] > maxVal)
                 {
-                    short val = image[row][i];
-                    if(val > maxVal)
+                    index = high;
+                    maxVal = image[row][high];
+                }
+                else if(index == low-1)
+                {
+                    //int high = Math.min(cols-1, col+n);
+                    maxVal = -1;
+                    for(int i=low; i<=high; ++i)
                     {
-                        maxVal = val;
+                        short val = image[row][i];
+                        if(val > maxVal)
+                        {
+                            index = i;
+                            maxVal = val;
+                        }
                     }
                 }
                 maxx[row][col] = maxVal;
@@ -142,19 +207,40 @@ public class ArrayUtil
         short[][] max = new short[rows][cols];
 
         //maxes of maxx in y direction
-        for(int row=0; row<rows; ++row)
+        for(int col=0; col<cols; ++col)
         {
-            for(int col=0; col<cols; ++col)
+            maxVal = -1;
+            for(int i=0; i<=n; ++i)
+            {
+                short val = maxx[i][col];
+                if(val > maxVal)
+                {
+                    index = i;
+                    maxVal = val;
+                }
+            }
+
+            for(int row=0; row<rows; ++row)
             {
                 int low = Math.max(0, row-n);
                 int high = Math.min(rows-1, row+n);
-                short maxVal = -1;
-                for(int i=low; i<=high; ++i)
+                if(maxx[high][col] > maxVal)
                 {
-                    short val = maxx[i][col];
-                    if(val > maxVal)
+                    index = high;
+                    maxVal = maxx[high][col];
+                }
+                else if(index == low-1)
+                {
+                    //int high = Math.min(rows-1, row+n);
+                    maxVal = -1;
+                    for(int i=low; i<=high; ++i)
                     {
-                        maxVal = val;
+                        short val = maxx[i][col];
+                        if(val > maxVal)
+                        {
+                            index = i;
+                            maxVal = val;
+                        }
                     }
                 }
                 max[row][col] = maxVal;
