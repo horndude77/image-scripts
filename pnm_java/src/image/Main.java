@@ -16,6 +16,8 @@ public class Main
             Thresholder thresholder = null;
             boolean postprocess = false;
             double energyThreshold = 100.0;
+            boolean removeBlobs = false;
+            int minBlobSize = 0;
 
             boolean deskew = false;
             boolean rotate = false;
@@ -93,6 +95,12 @@ public class Main
                     ++index;
                     postprocess = true;
                     energyThreshold = Double.parseDouble(args[index]);
+                }
+                else if("-removeblobs".equals(args[index]))
+                {
+                    ++index;
+                    removeBlobs = true;
+                    minBlobSize = Integer.parseInt(args[index]);
                 }
                 else if("-remove_sub_image".equals(args[index]))
                 {
@@ -177,6 +185,10 @@ public class Main
                         SubImageRemoval.blankRectangle(image, pos[0], pos[1], sub.getRows(), sub.getCols());
                     }
                 }
+                if(removeBlobs)
+                {
+                    BlobRemover.removeBlobs(image, minBlobSize);
+                }
 
                 try
                 {
@@ -221,6 +233,10 @@ public class Main
                 if(thresholder != null)
                 {
                     output = image.toPbm(thresholder, postprocess, energyThreshold);
+                    if(removeBlobs)
+                    {
+                        BlobRemover.removeBlobs(output, minBlobSize);
+                    }
                 }
 
                 try
@@ -256,6 +272,7 @@ public class Main
         System.out.println("\t-verbose");
         System.out.println("\t-rotate <degrees>");
         System.out.println("\t-deskew");
+        System.out.println("\t-removeblobs <minimum blob size>");
         System.out.println("\t-bilevel <method> <method args>");
         System.out.println("\t\tglobal <threshold>");
         System.out.println("\t\tbernsen <neighborhood size (odd number)> <l>");
