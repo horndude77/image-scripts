@@ -18,7 +18,9 @@
             classpathref="class.path"
             optimize="off"
             includes="**/*.java"
-            />
+            >
+            <compilerarg value="-Xlint"/>
+        </javac>
     </target>
 
     <target name="dist" depends="compile">

@@ -3,6 +3,8 @@ package image;
 import image.pnm.Pbm;
 import image.util.Pair;
 import java.util.Stack;
+import java.util.Set;
+import java.util.HashSet;
 
 public class BlobRemover
 {
@@ -56,24 +58,46 @@ public class BlobRemover
 
     private static void assignBlob(Pbm image, int[][] assignments, int row, int col, int blobNum)
     {
-        Stack<Pair<Integer, Integer>> s = new Stack<Pair<Integer, Integer>>();
-        s.push(new Pair<Integer, Integer>(row, col));
+        //Set<Pair<Integer, Integer>> seen = new HashSet<Pair<Integer, Integer>>();
+        Stack<Pair<Integer, Integer>> stack = new Stack<Pair<Integer, Integer>>();
+        stack.push(new Pair<Integer, Integer>(row, col));
         int rows = image.getRows();
         int cols = image.getCols();
 
-        while(!s.isEmpty())
+        while(!stack.isEmpty())
         {
-            Pair<Integer, Integer> p = s.pop();
+            Pair<Integer, Integer> p = stack.pop();
+            //seen.add(p);
             int currRow = p.getFirst();
             int currCol = p.getSecond();
 
             if(currRow >= 0 && currRow < rows && currCol >= 0 && currCol < cols && assignments[currRow][currCol] == 0 && image.get(currRow, currCol) == Pbm.BLACK)
             {
                 assignments[currRow][currCol] = blobNum;
-                s.push(new Pair<Integer, Integer>(currRow-1, currCol));
-                s.push(new Pair<Integer, Integer>(currRow+1, currCol));
-                s.push(new Pair<Integer, Integer>(currRow, currCol-1));
-                s.push(new Pair<Integer, Integer>(currRow, currCol+1));
+                Pair<Integer, Integer> up = new Pair<Integer, Integer>(currRow-1, currCol);
+                Pair<Integer, Integer> down = new Pair<Integer, Integer>(currRow+1, currCol);
+                Pair<Integer, Integer> left = new Pair<Integer, Integer>(currRow, currCol-1);
+                Pair<Integer, Integer> right = new Pair<Integer, Integer>(currRow, currCol+1);
+                //if(!seen.contains(up))
+                {
+                    //seen.add(up);
+                    stack.push(up);
+                }
+                //if(!seen.contains(down))
+                {
+                    //seen.add(down);
+                    stack.push(down);
+                }
+                //if(!seen.contains(left))
+                {
+                    //seen.add(left);
+                    stack.push(left);
+                }
+                //if(!seen.contains(right))
+                {
+                    //seen.add(right);
+                    stack.push(right);
+                }
             }
         }
     }
