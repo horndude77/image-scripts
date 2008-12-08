@@ -2,9 +2,8 @@ package image;
 
 import image.pnm.Pbm;
 import image.util.Pair;
-import java.util.Stack;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class BlobRemover
 {
@@ -15,16 +14,17 @@ public class BlobRemover
         int[][] assignments = new int[rows][cols];
         int blobNum = 0;
 
-        //assign pixel to a blob
+        //assign each pixel to a blob
         System.out.println("Assigning blob numbers...");
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                if(assignments[row][col] == 0 && image.get(row, col) == Pbm.BLACK)
+                if(assignments[row][col] == 0)
                 {
                     ++blobNum;
-                    assignBlob(image, assignments, row, col, blobNum);
+                    byte color = image.get(row, col);
+                    assignBlob(image, assignments, row, col, blobNum, color);
                 }
             }
         }
@@ -50,54 +50,37 @@ public class BlobRemover
                 int currBlobNum = assignments[row][col];
                 if(blobSizes[currBlobNum] < minBlobSize)
                 {
-                    image.set(row, col, Pbm.WHITE);
+                    image.invert(row, col);
                 }
             }
         }
     }
 
-    private static void assignBlob(Pbm image, int[][] assignments, int row, int col, int blobNum)
+    private static void assignBlob(Pbm image, int[][] assignments, int row, int col, int blobNum, byte color)
     {
-        //Set<Pair<Integer, Integer>> seen = new HashSet<Pair<Integer, Integer>>();
-        Stack<Pair<Integer, Integer>> stack = new Stack<Pair<Integer, Integer>>();
-        stack.push(new Pair<Integer, Integer>(row, col));
+        //Flood fill algorithm
+        Queue<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
+        queue.offer(new Pair<Integer, Integer>(row, col));
         int rows = image.getRows();
         int cols = image.getCols();
 
-        while(!stack.isEmpty())
+        while(!queue.isEmpty())
         {
-            Pair<Integer, Integer> p = stack.pop();
-            //seen.add(p);
+            Pair<Integer, Integer> p = queue.poll();
             int currRow = p.getFirst();
             int currCol = p.getSecond();
 
-            if(currRow >= 0 && currRow < rows && currCol >= 0 && currCol < cols && assignments[currRow][currCol] == 0 && image.get(currRow, currCol) == Pbm.BLACK)
+            if(currRow >= 0 && currRow < rows && currCol >= 0 && currCol < cols && assignments[currRow][currCol] == 0 && image.get(currRow, currCol) == color)
             {
                 assignments[currRow][currCol] = blobNum;
                 Pair<Integer, Integer> up = new Pair<Integer, Integer>(currRow-1, currCol);
                 Pair<Integer, Integer> down = new Pair<Integer, Integer>(currRow+1, currCol);
                 Pair<Integer, Integer> left = new Pair<Integer, Integer>(currRow, currCol-1);
                 Pair<Integer, Integer> right = new Pair<Integer, Integer>(currRow, currCol+1);
-                //if(!seen.contains(up))
-                {
-                    //seen.add(up);
-                    stack.push(up);
-                }
-                //if(!seen.contains(down))
-                {
-                    //seen.add(down);
-                    stack.push(down);
-                }
-                //if(!seen.contains(left))
-                {
-                    //seen.add(left);
-                    stack.push(left);
-                }
-                //if(!seen.contains(right))
-                {
-                    //seen.add(right);
-                    stack.push(right);
-                }
+                queue.offer(up);
+                queue.offer(down);
+                queue.offer(left);
+                queue.offer(right);
             }
         }
     }
