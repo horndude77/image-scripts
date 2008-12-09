@@ -1,2 +1,31 @@
-This is a collection of scripts and other items I have found useful in working
-with image files.
+My main goal is to create a set of tools which help in cleaning images to make
+them suitable for printing and viewing. Here's a high level view of some of the
+operations needed:
+
+Grayscale Scan -> deskew -> bilevel -> clean -> output image
+
+Everything is pretty experimental right now.
+
+Supported image types:
+----------------------
+For now only pbm and pgm files are supported. In the future I'd like to support
+tiff reading and writing. This would also help toward a goal of creating a full
+pdf as output.
+
+Deskew:
+-------
+The Hough Transform is used to find the skew angle. It isn't particularly fast,
+but for now it is quick enough and it works if the pages isn't very skewed.
+
+Bilevel:
+--------
+There are many methods for converting grayscale images to bilevel images. I'm
+still experimenting to find some good defaults. I want to use and adaptive
+method to cut out as much noise and inner page curl as possible.
+
+Clean:
+------
+The current method segments the image into contiguous sections, blobs, of
+either white or black pixels. Blobs which contain fewer pixels than some given
+threshold are discarded. More cleaning method need to be researched.
+
