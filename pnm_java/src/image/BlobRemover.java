@@ -2,6 +2,7 @@ package image;
 
 import image.pnm.Pbm;
 import image.util.Pair;
+import image.util.DisjointSet;
 import java.util.Queue;
 import java.util.LinkedList;
 
@@ -16,16 +17,59 @@ public class BlobRemover
 
         //assign each pixel to a blob
         System.out.println("Assigning blob numbers...");
+        //See "Connected Component Labeling" Wikipedia entry for more
+        //information on this algorithm.
+        DisjointSet<Integer> ds = new DisjointSet<Integer>();
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                if(assignments[row][col] == 0)
+                //System.out.println("("+row+", "+col+")");
+                byte color = image.get(row, col);
+                byte upColor = -1, leftColor = -1;
+                if(row > 0)
+                {
+                    upColor = image.get(row-1, col);
+                }
+                if(col > 0)
+                {
+                    leftColor = image.get(row, col-1);
+                }
+
+                if(upColor == color && leftColor == color)
+                {
+                    int upLabel = assignments[row-1][col];
+                    int leftLabel = assignments[row][col-1];
+                    int label = Math.min(upLabel, leftLabel);
+                    if(upLabel != leftLabel)
+                    {
+                        ds.union(upLabel, leftLabel);
+                    }
+                    assignments[row][col] = label;
+                }
+                else if(upColor == color)
+                {
+                    assignments[row][col] = assignments[row-1][col];
+                }
+                else if(leftColor == color)
+                {
+                    assignments[row][col] = assignments[row][col-1];
+                }
+                else
                 {
                     ++blobNum;
-                    byte color = image.get(row, col);
-                    assignBlob(image, assignments, row, col, blobNum, color);
+                    ds.makeSet(blobNum);
+                    assignments[row][col] = blobNum;
                 }
+            }
+        }
+
+        //correct labelings.
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                assignments[row][col] = ds.find(assignments[row][col]);
             }
         }
 
@@ -52,35 +96,6 @@ public class BlobRemover
                 {
                     image.invert(row, col);
                 }
-            }
-        }
-    }
-
-    private static void assignBlob(Pbm image, int[][] assignments, int row, int col, int blobNum, byte color)
-    {
-        //Flood fill algorithm
-        Queue<Pair<Integer, Integer>> queue = new LinkedList<Pair<Integer, Integer>>();
-        queue.offer(new Pair<Integer, Integer>(row, col));
-        int rows = image.getRows();
-        int cols = image.getCols();
-
-        while(!queue.isEmpty())
-        {
-            Pair<Integer, Integer> p = queue.poll();
-            int currRow = p.getFirst();
-            int currCol = p.getSecond();
-
-            if(currRow >= 0 && currRow < rows && currCol >= 0 && currCol < cols && assignments[currRow][currCol] == 0 && image.get(currRow, currCol) == color)
-            {
-                assignments[currRow][currCol] = blobNum;
-                Pair<Integer, Integer> up = new Pair<Integer, Integer>(currRow-1, currCol);
-                Pair<Integer, Integer> down = new Pair<Integer, Integer>(currRow+1, currCol);
-                Pair<Integer, Integer> left = new Pair<Integer, Integer>(currRow, currCol-1);
-                Pair<Integer, Integer> right = new Pair<Integer, Integer>(currRow, currCol+1);
-                queue.offer(up);
-                queue.offer(down);
-                queue.offer(left);
-                queue.offer(right);
             }
         }
     }
