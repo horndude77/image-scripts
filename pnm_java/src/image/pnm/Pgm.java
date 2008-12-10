@@ -259,10 +259,8 @@ public class Pgm
         maxval = Short.parseShort(sb.toString());
 
         //Skip a single whitespace character
-        b = is.read();
 
         //read data
-        b = is.read();
         data = new short[rows][cols];
         if(raw)
         {

@@ -60,6 +60,10 @@ public class Main
                         double threshold = Double.parseDouble(args[index]);
                         thresholder = new GlobalThresholder(threshold);
                     }
+                    else if("otsu".equals(args[index]))
+                    {
+                        thresholder = new OtsuThresholder();
+                    }
                     else if("bernsen".equals(args[index]))
                     {
                         ++index;
