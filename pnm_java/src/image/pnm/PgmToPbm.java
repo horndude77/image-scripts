@@ -19,7 +19,7 @@ public class PgmToPbm
         //Pbm out = in.toPbm(new BernsenThresholder(75, 15));
         //Pbm out = in.toPbm(new NiblackThresholder(75, -0.3));
         Pbm out = in.toPbm(new RunningAverageThresholder(30, 0.88));
-        out.clean();
+        //out.clean();
         out.write(outputPbm);
     }
 }

@@ -152,7 +152,7 @@ public class Pgm
         return this.cols;
     }
 
-    public int getMaxval()
+    public short getMaxval()
     {
         return this.maxval;
     }

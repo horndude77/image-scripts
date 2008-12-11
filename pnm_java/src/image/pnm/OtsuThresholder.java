@@ -15,7 +15,15 @@ public class OtsuThresholder
         {
             for(int col=0; col<cols; ++col)
             {
-                histogram[input.get(row, col)]++;
+                int val = input.get(row, col);
+                if(val > maxval)
+                {
+                    System.out.println("Bad value of "+val+" at ("+row+", "+col+")");
+                }
+                else
+                {
+                    histogram[val]++;
+                }
             }
         }
 
