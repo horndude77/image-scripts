@@ -29,7 +29,7 @@ public class NiblackThresholder
         double[][] dataFloat = ArrayUtil.toDoubleArray(data);
         double[][] stdev = ArrayUtil.stdevNeighborhood(dataFloat, neighborhood);
         double[][] mean = ArrayUtil.meanNeighborhood(dataFloat, neighborhood);
-        double[][] threshold = ArrayUtil.add(mean, ArrayUtil.multiplyEach(stdev, k));
+        double[][] threshold = ArrayUtil.add(dataFloat, mean, ArrayUtil.multiplyEach(dataFloat, stdev, k));
 
         System.out.println("Applying Niblack thresholding...");
         Pbm out = new Pbm(rows, cols);

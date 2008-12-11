@@ -2,60 +2,72 @@ package image.util;
 
 public class ArrayUtil
 {
-    public static double[][] sumNeighborhoods(double[][] image, int neighborhood)
+    public static double[][] sumNeighborhoods(double[][] arr, int neighborhood)
+    {
+        int rows = arr.length;
+        int cols = arr[0].length;
+        double[][] target = new double[rows][cols];
+        return sumNeighborhoods(target, arr, neighborhood);
+    }
+
+    public static double[][] sumNeighborhoods(double[][] sum, double[][] arr, int neighborhood)
     {
         int n = (neighborhood-1)/2;
-        int rows = image.length;
-        int cols = image[0].length;
-        double[][] sumx = new double[rows][cols];
+        int rows = arr.length;
+        int cols = arr[0].length;
+
+        double[] circularBuffer = new double[neighborhood];
+        int circularIndex = 0;
 
         //sums in x direction
         for(int row=0; row<rows; ++row)
         {
             //start sum
             double sumVal = 0.0;
-            for(int i=0; i<=n; ++i)
+            for(int i=-n; i<=n; ++i)
             {
-                sumVal += image[row][i];
+                double val = 0.0;
+                if(i>=0) val = arr[row][i];
+                sumVal += val;
+                circularBuffer[circularIndex] = val;
+                circularIndex = (circularIndex+1)%neighborhood;
             }
 
             for(int col=0; col<cols; ++col)
             {
-                sumx[row][col] = sumVal;
-                if(col-n >= 0)
-                {
-                    sumVal -= image[row][col-n];
-                }
-                if(col+n+1 < cols)
-                {
-                    sumVal += image[row][col+n+1];
-                }
+                double val = 0.0;
+                if(col+n+1 < cols) val = arr[row][col+n+1];
+                sum[row][col] = sumVal;
+                sumVal -= circularBuffer[circularIndex];
+                sumVal += val;
+                circularBuffer[circularIndex] = val;
+                circularIndex = (circularIndex+1)%neighborhood;
             }
         }
 
-        double[][] sum = new double[rows][cols];
-
-        //sums of sumx in y direction
+        //sums of sums in y direction
         for(int col=0; col<cols; ++col)
         {
             //start sum
             double sumVal = 0.0;
-            for(int i=0; i<=n; ++i)
+            for(int i=-n; i<=n; ++i)
             {
-                sumVal += sumx[i][col];
+                double val = 0.0;
+                if(i>=0) val = sum[i][col];
+                sumVal += val;
+                circularBuffer[circularIndex] = val;
+                circularIndex = (circularIndex+1)%neighborhood;
             }
 
             for(int row=0; row<rows; ++row)
             {
+                double val = 0.0;
+                if(row+n+1 < rows) val = sum[row+n+1][col];
                 sum[row][col] = sumVal;
-                if(row-n >= 0)
-                {
-                    sumVal -= sumx[row-n][col];
-                }
-                if(row+n+1 < rows)
-                {
-                    sumVal += sumx[row+n+1][col];
-                }
+                sumVal -= circularBuffer[circularIndex];
+                sumVal += val;
+                circularBuffer[circularIndex] = val;
+                circularIndex = (circularIndex+1)%neighborhood;
             }
         }
         return sum;
@@ -188,7 +200,6 @@ public class ArrayUtil
                 }
                 else if(index == low-1)
                 {
-                    //int high = Math.min(cols-1, col+n);
                     maxVal = -1;
                     for(int i=low; i<=high; ++i)
                     {
@@ -231,7 +242,6 @@ public class ArrayUtil
                 }
                 else if(index == low-1)
                 {
-                    //int high = Math.min(rows-1, row+n);
                     maxVal = -1;
                     for(int i=low; i<=high; ++i)
                     {
@@ -253,7 +263,14 @@ public class ArrayUtil
     {
         int rows = arr.length;
         int cols = arr[0].length;
-        double[][] squares = new double[rows][cols];
+        double[][] target = new double[rows][cols];
+        return squareEach(target, arr);
+    }
+
+    public static double[][] squareEach(double[][] squares, double[][] arr)
+    {
+        int rows = arr.length;
+        int cols = arr[0].length;
 
         for(int row=0; row<rows; ++row)
         {
@@ -270,7 +287,14 @@ public class ArrayUtil
     {
         int rows = arr.length;
         int cols = arr[0].length;
-        double[][] squareRoots = new double[rows][cols];
+        double[][] target = new double[rows][cols];
+        return squareRootEach(target, arr);
+    }
+
+    public static double[][] squareRootEach(double[][] squareRoots, double[][] arr)
+    {
+        int rows = arr.length;
+        int cols = arr[0].length;
 
         for(int row=0; row<rows; ++row)
         {
@@ -286,7 +310,14 @@ public class ArrayUtil
     {
         int rows = arr.length;
         int cols = arr[0].length;
-        double[][] products = new double[rows][cols];
+        double[][] target = new double[rows][cols];
+        return multiplyEach(target, arr, val);
+    }
+
+    public static double[][] multiplyEach(double[][] products, double[][] arr, double val)
+    {
+        int rows = arr.length;
+        int cols = arr[0].length;
 
         for(int row=0; row<rows; ++row)
         {
@@ -301,8 +332,15 @@ public class ArrayUtil
     public static double[][] add(double[][] a, double[][] b)
     {
         int rows = a.length;
+        int cols = a[0].length;
+        double[][] target = new double[rows][cols];
+        return add(target, a, b);
+    }
+
+    public static double[][] add(double[][] sum, double[][] a, double[][] b)
+    {
+        int rows = a.length;
         int cols = b[0].length;
-        double[][] sum = new double[rows][cols];
 
         for(int row=0; row<rows; ++row)
         {
@@ -317,8 +355,15 @@ public class ArrayUtil
     public static double[][] subtract(double[][] a, double[][] b)
     {
         int rows = a.length;
-        int cols = b[0].length;
-        double[][] difference = new double[rows][cols];
+        int cols = a[0].length;
+        double[][] target = new double[rows][cols];
+        return subtract(target, a, b);
+    }
+
+    public static double[][] subtract(double[][] difference, double[][] a, double[][] b)
+    {
+        int rows = a.length;
+        int cols = a[0].length;
 
         for(int row=0; row<rows; ++row)
         {
@@ -330,24 +375,44 @@ public class ArrayUtil
         return difference;
     }
 
-    public static double[][] meanNeighborhood(double[][] image, int neighborhood)
+    public static double[][] meanNeighborhood(double[][] arr, int neighborhood)
     {
-        int count = neighborhood*neighborhood;
-        double[][] sums = sumNeighborhoods(image, neighborhood);
-        return multiplyEach(sums, 1.0/count);
+        int rows = arr.length;
+        int cols = arr[0].length;
+        double[][] target = new double[rows][cols];
+        return meanNeighborhood(target, arr, neighborhood);
     }
 
-    public static double[][] stdevNeighborhood(double[][] image, int neighborhood)
+    public static double[][] meanNeighborhood(double[][] target, double[][] arr, int neighborhood)
+    {
+        int count = neighborhood*neighborhood;
+        double[][] sums = sumNeighborhoods(target, arr, neighborhood);
+        return multiplyEach(target, sums, 1.0/count);
+    }
+
+    public static double[][] stdevNeighborhood(double[][] arr, int neighborhood)
+    {
+        int rows = arr.length;
+        int cols = arr[0].length;
+        double[][] target = new double[rows][cols]; //new array
+        return stdevNeighborhood(target, arr, neighborhood);
+    }
+
+    public static double[][] stdevNeighborhood(double[][] target, double[][] arr, int neighborhood)
     {
         //See the 'Rapid calculation methods' in the 'Standard Deviation' 
         //Wikipedia entry for this formula.
         int count = neighborhood*neighborhood;
-        return multiplyEach(
-                squareRootEach(
-                    subtract(
-                        multiplyEach(sumNeighborhoods(squareEach(image), neighborhood), count),
-                        squareEach(sumNeighborhoods(image, neighborhood)))),
-                1.0/count);
+
+        double[][] meansSquared = meanNeighborhood(arr, neighborhood); //new array
+        squareEach(meansSquared, meansSquared);
+
+        double[][] squaresMean = squareEach(target, arr);
+        squaresMean = meanNeighborhood(target, squaresMean, neighborhood);
+
+        subtract(target, squaresMean, meansSquared);
+        squareRootEach(target, target);
+        return target;
     }
 
     public static double mean(short[] arr)
@@ -401,24 +466,5 @@ public class ArrayUtil
             }
         }
         return outArr;
-    }
-
-    public static void main(String[] args)
-    {
-        int rows = 10;
-        int cols = 10;
-        short[][] arr = new short[rows][cols];
-        for(int row=0; row<rows; ++row)
-        {
-            for(int col=0; col<cols; ++col)
-            {
-                arr[row][col] = 7;
-            }
-        }
-        arr[0][0] = 1;
-        arr[5][5] = 3;
-        arr[7][7] = 2;
-        short[][] max = minNeighborhoods(arr, 3);
-        printArr(max);
     }
 }
