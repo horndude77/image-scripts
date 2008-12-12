@@ -142,6 +142,108 @@ public class Pgm
         }
     }
 
+    public short getMaxvalWhenOutOfRange(int row, int col)
+    {
+        if(row < 0 || row >= rows || col < 0 || col >= cols)
+        {
+            return maxval;
+        }
+        else
+        {
+            return data[row][col];
+        }
+    }
+
+    public short getClosestWhenOutOfRange(int row, int col)
+    {
+        if(row < 0)
+        {
+            row = 0;
+        }
+        else if(row >= rows)
+        {
+            row = rows-1;
+        }
+        if(col < 0)
+        {
+            col = 0;
+        }
+        else if(col >= cols)
+        {
+            col = cols-1;
+        }
+        return data[row][col];
+    }
+
+    public double getLinearInterpolation(double ry, double rx)
+    {
+        int x = (int) Math.floor(rx);
+        int y = (int) Math.floor(ry);
+        //weights to use for picking value
+        double wx = 1.0 - Math.abs(rx - x);
+        double wy = 1.0 - Math.abs(ry - y);
+
+        double val = 0.0;
+        val += wx*wy*getMaxvalWhenOutOfRange(y, x);
+        val += (1.0-wx)*wy*getMaxvalWhenOutOfRange(y, x+1);
+        val += wx*(1.0-wy)*getMaxvalWhenOutOfRange(y+1, x);
+        val += (1.0-wx)*(1.0-wy)*getMaxvalWhenOutOfRange(y+1, x+1);
+        return val;
+    }
+
+    public double getBicubicInterpolation(double ry, double rx)
+    {
+        int x = (int) Math.floor(rx);
+        int y = (int) Math.floor(ry);
+
+        double a = -0.75;
+
+        double dx1 = Math.abs(rx - x);
+        double dx1p = 1.0-dx1;
+        double dx2 = dx1+1.0;
+        double dx2p = 3.0-dx2;
+        double dy1 = Math.abs(ry - y);
+        double dy1p = 1.0-dy1;
+        double dy2 = dy1+1.0;
+        double dy2p = 3.0-dy2;
+
+        double wx1 = ((a+2.0)*dx1 - (a+3.0))*dx1*dx1 + 1.0;
+        double wx1p = ((a+2.0)*dx1p - (a+3.0))*dx1p*dx1p + 1.0;
+        double wx2 = a*(((dx2 - 5.0)*dx2 + 8.0)*dx2 - 4.0);
+        double wx2p = a*(((dx2p - 5.0)*dx2p + 8.0)*dx2p - 4.0);
+        double wy1 = ((a+2.0)*dy1 - (a+3.0))*dy1*dy1 + 1.0;
+        double wy1p = ((a+2.0)*dy1p - (a+3.0))*dy1p*dy1p + 1.0;
+        double wy2 = a*(((dy2 - 5.0)*dy2 + 8.0)*dy2 - 4.0);
+        double wy2p = a*(((dy2p - 5.0)*dy2p + 8.0)*dy2p - 4.0);
+
+        double val = 0.0;
+        //center
+        val += wx1*wy1*getMaxvalWhenOutOfRange(y, x);
+        val += wx1p*wy1*getMaxvalWhenOutOfRange(y, x+1);
+        val += wx1*wy1p*getMaxvalWhenOutOfRange(y+1, x);
+        val += wx1p*wy1p*getMaxvalWhenOutOfRange(y+1, x+1);
+
+        //corners
+        val += wx2*wy2*getMaxvalWhenOutOfRange(y-1, x-1);
+        val += wx2p*wy2*getMaxvalWhenOutOfRange(y-1, x+2);
+        val += wx2*wy2p*getMaxvalWhenOutOfRange(y+2, x-1);
+        val += wx2p*wy2p*getMaxvalWhenOutOfRange(y+2, x+2);
+
+        //outer x middle y
+        val += wx2*wy1*getMaxvalWhenOutOfRange(y, x-1);
+        val += wx2p*wy1*getMaxvalWhenOutOfRange(y, x+2);
+        val += wx2*wy1p*getMaxvalWhenOutOfRange(y+1, x-1);
+        val += wx2p*wy1p*getMaxvalWhenOutOfRange(y+1, x+2);
+
+        //outer y middle x
+        val += wx1*wy2*getMaxvalWhenOutOfRange(y-1, x);
+        val += wx1p*wy2*getMaxvalWhenOutOfRange(y-1, x+1);
+        val += wx1*wy2p*getMaxvalWhenOutOfRange(y+2, x);
+        val += wx1p*wy2p*getMaxvalWhenOutOfRange(y+2, x+1);
+
+        return val;
+    }
+
     public int getRows()
     {
         return this.rows;
@@ -362,51 +464,9 @@ public class Pgm
                     for(int col=0; col<cols; ++col)
                     {
                         //location in original
-                        double rx = (col-cx)*cosa - (row-cy)*sina;
-                        double ry = (col-cx)*sina + (row-cy)*cosa;
-                        //integer location in original
-                        int x = (int) (rx+cx);
-                        int y = (int) (ry+cy);
-                        //weights to use for picking value
-                        double wx = 1.0 - (rx - (x - cx));
-                        double wy = 1.0 - (ry - (y - cy));
-
-                        double val = 0.0;
-                        if(x > 0 && x < cols && y > 0 && y < rows)
-                        {
-                            val += wx*wy*data[y][x];
-                        }
-                        else
-                        {
-                            val += wx*wy*defaultBackground;
-                        }
-
-                        if((x+1) > 0 && (x+1) < cols && y > 0 && y < rows)
-                        {
-                            val += (1.0-wx)*wy*data[y][x+1];
-                        }
-                        else
-                        {
-                            val += (1.0-wx)*wy*defaultBackground;
-                        }
-
-                        if(x > 0 && x < cols && (y+1) > 0 && (y+1) < rows)
-                        {
-                            val += wx*(1.0-wy)*data[y+1][x];
-                        }
-                        else
-                        {
-                            val += wx*(1.0-wy)*defaultBackground;
-                        }
-
-                        if((x+1) > 0 && (x+1) < cols && (y+1) > 0 && (y+1) < rows)
-                        {
-                            val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
-                        }
-                        else
-                        {
-                            val += (1.0-wx)*(1.0-wy)*defaultBackground;
-                        }
+                        double rx = ((col-cx)*cosa - (row-cy)*sina) + cx;
+                        double ry = ((col-cx)*sina + (row-cy)*cosa) + cy;
+                        double val = getLinearInterpolation(ry, rx);
 
                         rotated.set(row, col, (short) Math.round(val));
                     }
