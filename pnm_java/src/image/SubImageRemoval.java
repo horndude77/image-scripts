@@ -12,6 +12,7 @@ public class SubImageRemoval
 
     public static void blankRectangle(Pbm image, int rowStart, int colStart, int rows, int cols)
     {
+        System.out.println("Blanking "+rows+"x"+cols+" rectangle at: ("+rowStart+", "+colStart+")");
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
@@ -23,6 +24,7 @@ public class SubImageRemoval
 
     public static void invertSubImage(Pbm image, Pbm sub, int rowStart, int colStart)
     {
+        System.out.println("Inverting logo at: ("+rowStart+", "+colStart+")");
         int rows = sub.getRows();
         int cols = sub.getCols();
 
@@ -32,10 +34,27 @@ public class SubImageRemoval
             {
                 if(sub.get(row, col) == Pbm.BLACK)
                 {
-                    image.set(rowStart+row, colStart+col, (byte) (0x1 & (~image.get(rowStart+row, colStart+col))));
+                    image.set(rowStart+row, colStart+col, Pbm.WHITE);
                 }
             }
         }
+    }
+
+    public static int firstNonBlankRow(Pbm image)
+    {
+        int rows = image.getRows();
+        int cols = image.getCols();
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(image.get(row, col) == Pbm.BLACK)
+                {
+                    return row;
+                }
+            }
+        }
+        return rows;
     }
 
     public static int scoreSection(Pbm main, Pbm sub, int rowStart, int colStart, int cutoff)
@@ -59,6 +78,7 @@ public class SubImageRemoval
             {
                 if(score >= cutoff)
                 {
+                    //System.out.println("cutting it off score: "+score);
                     return Integer.MAX_VALUE;
                 }
                 //System.out.println("Add to score: "+(main.get(rowStart+row, colStart+col) ^ sub.get(row, col)));
@@ -69,15 +89,21 @@ public class SubImageRemoval
         return score;
     }
 
-    public static int[] findImage(final Pbm main, final Pbm sub, final int startRow, final int rowCount, final int startCol, final int colCount, final int cutoff)
+    public static int[] findImage(final Pbm main, final Pbm sub, int startRowInput, final int rowCount, final int startCol, final int colCount, final int cutoff)
     {
+        //System.out.println("Finding subimage...");
+        //skip a bunch of rows.
+        final int startRow = Math.max(firstNonBlankRow(main), startRowInput);
+
         final int rows = main.getRows();
         final int cols = main.getCols();
+        final int subRows = sub.getRows();
+        final int subCols = sub.getCols();
 
         int bestRow = -1;
         int bestCol = -1;
         int bestScore = cutoff;
-        System.out.println(bestScore);
+        //System.out.println("Cutoff score: "+bestScore);
         //Lame. Gets around 'final' restriction when using inner classes.
         final int[] best = new int[]{bestRow, bestCol, bestScore};
 
@@ -89,19 +115,20 @@ public class SubImageRemoval
         //Lame. See above.
         final boolean[] looping = new boolean[]{true};
 
-        for(int rowc=startRow; rowc<startRow+rowCount && looping[0]; ++rowc)
+        for(int rowc=startRow; rowc<startRow+rowCount && rowc<rows-subRows && looping[0]; ++rowc)
         {
             final int row = rowc;
             pool.execute(new Runnable()
             {
                 public void run()
                 {
-                    for(int col=startCol; col<startCol+colCount && looping[0]; ++col)
+                    for(int col=startCol; col<startCol+colCount && col<cols-subCols && looping[0]; ++col)
                     {
                         int score = scoreSection(main, sub, row, col, best[2]);
+                        //System.out.println("curr score: "+score);
                         if(score < best[2])
                         {
-                            System.out.println("New best score: "+score+" - ("+row+", "+col+")");
+                            //System.out.println("New best score: "+score+" - ("+row+", "+col+")");
                             synchronized(lock)
                             {
                                 best[0] = row;
@@ -126,6 +153,12 @@ public class SubImageRemoval
         {
             e.printStackTrace();
         }
+
+        if(best[0] == -1)
+        {
+            throw new RuntimeException("Unable to find subimage");
+        }
+
         return new int[] {best[0], best[1]};
     }
 
@@ -157,7 +190,7 @@ public class SubImageRemoval
 
         int cutoff = (int) ( (cutoffPercentage/100.0) * sub.getRows() * sub.getCols());
 
-        main.write(mainFilename+"test.pbm");
+        //main.write(mainFilename+"test.pbm");
 
         int[] pos = findImage(main, sub, startRow, rowCount, startCol, colCount, cutoff);
         if("invert_logo".equals(removalMethod))

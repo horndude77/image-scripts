@@ -1,9 +1,24 @@
 #!/usr/bin/env ruby
 
+PBM_LOGO='logos/logo_pbm2.pbm'
+PBM_PERCENTAGE_CLOSE=5.0
+PBM_ROW_START=0 #start on first non blank row
+PBM_ROWS_TO_SEARCH=50
+PBM_COL_START=0
+PBM_COLS_TO_SEARCH=-1 #-1 here means to search all columns.
+
+PPM_LOGO='logos/logo_ppm2.pbm'
+PPM_PERCENTAGE_CLOSE=25.0
+PPM_ROW_START=0 #start on first non blank row
+PPM_ROWS_TO_SEARCH=5
+PPM_COL_START=1000
+PPM_COLS_TO_SEARCH=600
+
 def remove_logo_pbm(image_filename, logo_filename, percentage_close, start_row, rows_to_search, start_col, cols_to_search, blank_method)
     out_filename = image_filename.sub(/.pbm/, 'out.pbm')
     return if(File.exists?(out_filename))
     puts "removing logo from #{image_filename}..."
+    puts "#{File.dirname(File.expand_path($0))}/sub_image_remove #{image_filename} #{logo_filename} #{out_filename} #{percentage_close} #{start_row} #{rows_to_search} #{start_col} #{cols_to_search} #{blank_method}"
     out = `#{File.dirname(File.expand_path($0))}/sub_image_remove #{image_filename} #{logo_filename} #{out_filename} #{percentage_close} #{start_row} #{rows_to_search} #{start_col} #{cols_to_search} #{blank_method}`
     puts out
 end
@@ -14,8 +29,6 @@ def remove_logo_ppm(image_filename, logo_filename, percentage_close, start_row, 
     remove_logo_pbm(pbm_filename, logo_filename, percentage_close, start_row, rows_to_search, start_col, cols_to_search, blank_method)
 end
 
-PBM_LOGO='logo_pbm.pbm'
-PPM_LOGO='logo_ppm.pbm'
 PREFIX='prefix'
 
 pdf = ARGV[0]
@@ -23,12 +36,12 @@ pdf = ARGV[0]
 
 pbm_files = Dir["#{PREFIX}*.pbm"].sort
 pbm_files.each do |image|
-    remove_logo_pbm(image, PBM_LOGO, 1.0, 0, 200, 0, -1, 'invert_logo')
+    remove_logo_pbm(image, PBM_LOGO, PBM_PERCENTAGE_CLOSE, PBM_ROW_START, PBM_ROWS_TO_SEARCH, PBM_COL_START, PBM_COLS_TO_SEARCH, 'invert_logo')
 end
 
 ppm_files = Dir["#{PREFIX}*.ppm"].sort
 ppm_files.each do |image|
-    remove_logo_ppm(image, PPM_LOGO, 10.0, 0, 100, 1040, 20, 'blank_rectangle')
+    remove_logo_ppm(image, PPM_LOGO, PPM_PERCENTAGE_CLOSE, PPM_ROW_START, PPM_ROWS_TO_SEARCH, PPM_COL_START, PPM_COLS_TO_SEARCH, 'blank_rectangle')
 end
 
 Dir["#{PREFIX}*out.pbm"].each do |pbm|
