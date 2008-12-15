@@ -31,6 +31,14 @@ public class Pgm
         this.data = new short[rows][cols];
     }
 
+    public Pgm(short[][] data, short maxval)
+    {
+        this.rows = data.length;
+        this.cols = data[0].length;
+        this.maxval = maxval;
+        this.data = data;
+    }
+
     public Pgm(InputStream is)
         throws IOException
     {
@@ -188,7 +196,7 @@ public class Pgm
         val += (1.0-wx)*wy*getMaxvalWhenOutOfRange(y, x+1);
         val += wx*(1.0-wy)*getMaxvalWhenOutOfRange(y+1, x);
         val += (1.0-wx)*(1.0-wy)*getMaxvalWhenOutOfRange(y+1, x+1);
-        return val;
+        return Math.min(val, maxval);
     }
 
     public double getBicubicInterpolation(double ry, double rx)
@@ -197,6 +205,7 @@ public class Pgm
         int y = (int) Math.floor(ry);
 
         double a = -0.75;
+        double epislon = 0.00001;
 
         double dx1 = Math.abs(rx - x);
         double dx1p = 1.0-dx1;
@@ -206,6 +215,11 @@ public class Pgm
         double dy1p = 1.0-dy1;
         double dy2 = dy1+1.0;
         double dy2p = 3.0-dy2;
+
+        dx1 = dx1 < epislon ? 1.0 : dx1;
+        dx1p = dx1p < epislon ? 1.0 : dx1p;
+        dy1 = dy1 < epislon ? 1.0 : dy1;
+        dy1p = dy1p < epislon ? 1.0 : dy1p;
 
         double wx1 = ((a+2.0)*dx1 - (a+3.0))*dx1*dx1 + 1.0;
         double wx1p = ((a+2.0)*dx1p - (a+3.0))*dx1p*dx1p + 1.0;
@@ -241,7 +255,7 @@ public class Pgm
         val += wx1*wy2p*getMaxvalWhenOutOfRange(y+2, x);
         val += wx1p*wy2p*getMaxvalWhenOutOfRange(y+2, x+1);
 
-        return val;
+        return Math.min(val, maxval);
     }
 
     public int getRows()
@@ -468,7 +482,7 @@ public class Pgm
                         double ry = ((col-cx)*sina + (row-cy)*cosa) + cy;
                         double val = getLinearInterpolation(ry, rx);
 
-                        rotated.set(row, col, (short) Math.round(val));
+                        rotated.set(row, col, (short) val);
                     }
                 }
             });

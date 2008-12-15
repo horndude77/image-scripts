@@ -6,20 +6,25 @@ for i in $@
 do
     echo $i
 
-    pgm=${i%.tiff}.pgm
+    #pgm=${i%.tiff}.pgm
+    pgm=$i
     clean_pbm=clean_${pgm%.pgm}.pbm
-    convert $i $pgm
+    #convert $i $pgm
 
     #deskew
-    $SCRIPT_DIR/is $pgm $clean_pbm -deskew -bilevel bernsen 75 15 -postprocess 100
+    #$SCRIPT_DIR/is $pgm $clean_pbm -deskew -bilevel bernsen 75 15 #-postprocess 100
+    $SCRIPT_DIR/is $pgm $clean_pbm -deskew -bilevel otsu -removeblobs 25 -border 125 125 125 125 -center
 
     #make 9x12 @ 600dpi
-    convert $clean_pbm -background white -gravity center -extent 5400x7200 $clean_pbm
+    #convert $clean_pbm -background white -gravity center -extent 5400x7200 $clean_pbm
+    #make 8.5x11 @ 600dpi
+    convert $clean_pbm -background white -gravity center -extent 5100x6600 $clean_pbm
 
     #convert to 600dpi tiff
     convert $clean_pbm -density 600 -units PixelsPerInch -compress group4 ${clean_pbm%.pbm}.tiff
 
     #clean up
-    rm $pgm $clean_pbm
+    #rm $pgm $clean_pbm
+    rm $clean_pbm
 done
 

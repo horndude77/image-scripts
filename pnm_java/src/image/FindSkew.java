@@ -1,6 +1,7 @@
 package image;
 
 import image.pnm.Pbm;
+import image.pnm.Pgm;
 
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,7 @@ public class FindSkew
      * @param highAngle End angle in radians.
      * @param step Step in radians.
      */
-    public static int[][] hough(final Pbm image, double lowAngle, double highAngle, double step)
+    public static int[][] hough(final Pbm image, final double lowAngle, final double highAngle, final double step)
     {
         //System.out.println("Performing hough...");
         final int rows = image.getRows();
@@ -73,12 +74,49 @@ public class FindSkew
         return h;
     }
 
+    public static void writeHoughImage(String filename, int[][] h)
+    {
+        int rows = h.length;
+        int cols = h[0].length;
+        short maxval = 255;
+        short[][] hshort = new short[rows][cols];
+        //find max
+        double max = 0;
+        for(int row=0; row<rows;++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(h[row][col] > max) { max = h[row][col]; }
+            }
+        }
+
+        //normalize
+        for(int row=0; row<rows;++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                hshort[row][col] = (short) ((maxval/max) * h[row][col]);
+            }
+        }
+
+        try
+        {
+            (new Pgm(hshort, maxval)).write(filename);
+        }
+        catch(Exception e)
+        {
+            //ignore
+        }
+    }
+
     public static double findSkew(Pbm image)
     {
         double lowAngle = -3.5, highAngle = 3.5, step = 0.05;
         int[][] h = hough(image, Math.toRadians(lowAngle), Math.toRadians(highAngle), Math.toRadians(step));
+        //writeHoughImage("hough.pgm", h);
         //find largest value
         //System.out.println("Finding max angle...");
+        /*
         int max = -1;
         int maxTheta = -1;
         for(int theta=0; theta<h.length; ++theta)
@@ -90,6 +128,26 @@ public class FindSkew
                     maxTheta = theta;
                     max = h[theta][r];
                 }
+            }
+        }
+        */
+        double[] squares = new double[h.length];
+        for(int theta=0; theta<h.length; ++theta)
+        {
+            for(int r=0; r<h[theta].length; ++r)
+            {
+                double val = h[theta][r];
+                squares[theta] += val*val;
+            }
+        }
+        double max = -1;
+        int maxTheta = -1;
+        for(int i=0; i<squares.length; ++i)
+        {
+            if(squares[i] > max)
+            {
+                maxTheta = i;
+                max = squares[i];
             }
         }
         //System.out.println("Found max angle!");

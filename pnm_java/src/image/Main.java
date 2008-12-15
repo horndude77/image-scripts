@@ -32,6 +32,13 @@ public class Main
             double cutoffPercentage = -1.0;
             String removalMethod = "blank_rectangle";
 
+            boolean center = false;
+            boolean border = false;
+            int topBorder = 0;
+            int bottomBorder = 0;
+            int leftBorder = 0;
+            int rightBorder = 0;
+
             inputFilename = args[index++];
             outputFilename = args[index++];
             for(;index < args.length; ++index)
@@ -40,6 +47,22 @@ public class Main
                 {
                     //TODO: make this do something.
                     verbose = true;
+                }
+                if("-center".equals(args[index]))
+                {
+                    center = true;
+                }
+                else if("-border".equals(args[index]))
+                {
+                    border = true;
+                    ++index;
+                    topBorder = Integer.parseInt(args[index]);
+                    ++index;
+                    bottomBorder = Integer.parseInt(args[index]);
+                    ++index;
+                    leftBorder = Integer.parseInt(args[index]);
+                    ++index;
+                    rightBorder = Integer.parseInt(args[index]);
                 }
                 else if("-rotate".equals(args[index]))
                 {
@@ -161,6 +184,14 @@ public class Main
                 {
                     image = image.centerRotate(rotation);
                 }
+                if(border)
+                {
+                    Border.blankBorder(image, topBorder, bottomBorder, leftBorder, rightBorder);
+                }
+                if(center)
+                {
+                    image = Border.centerImage(image);
+                }
                 if(subimageRemoval)
                 {
                     Pbm sub = null;
@@ -240,6 +271,14 @@ public class Main
                     if(removeBlobs)
                     {
                         BlobRemover.removeBlobs(output, minBlobSize);
+                    }
+                    if(border)
+                    {
+                        Border.blankBorder(output, topBorder, bottomBorder, leftBorder, rightBorder);
+                    }
+                    if(center)
+                    {
+                        output = Border.centerImage(output);
                     }
                 }
 

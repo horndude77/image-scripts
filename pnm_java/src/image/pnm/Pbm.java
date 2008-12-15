@@ -91,6 +91,18 @@ public class Pbm
         return data[row][col];
     }
 
+    public byte getWhiteWhenOutOfRange(int row, int col)
+    {
+        if(row < 0 || row >= rows || col < 0 || col >= cols)
+        {
+            return WHITE;
+        }
+        else
+        {
+            return data[row][col];
+        }
+    }
+
     public int getRows()
     {
         return this.rows;
