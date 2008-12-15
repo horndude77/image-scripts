@@ -192,14 +192,21 @@ public class SubImageRemoval
 
         //main.write(mainFilename+"test.pbm");
 
-        int[] pos = findImage(main, sub, startRow, rowCount, startCol, colCount, cutoff);
-        if("invert_logo".equals(removalMethod))
+        try
         {
-            invertSubImage(main, sub, pos[0], pos[1]);
+            int[] pos = findImage(main, sub, startRow, rowCount, startCol, colCount, cutoff);
+            if("invert_logo".equals(removalMethod))
+            {
+                invertSubImage(main, sub, pos[0], pos[1]);
+            }
+            else if("blank_rectangle".equals(removalMethod))
+            {
+                blankRectangle(main, pos[0], pos[1], sub.getRows(), sub.getCols());
+            }
         }
-        else if("blank_rectangle".equals(removalMethod))
+        catch(Exception e)
         {
-            blankRectangle(main, pos[0], pos[1], sub.getRows(), sub.getCols());
+            e.printStackTrace();
         }
         main.write(outFilename);
     }
