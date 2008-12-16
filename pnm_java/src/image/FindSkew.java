@@ -111,6 +111,7 @@ public class FindSkew
 
     public static double findSkew(Pbm image)
     {
+        System.out.println("Finding skew...");
         double lowAngle = -3.5, highAngle = 3.5, step = 0.05;
         int[][] h = hough(image, Math.toRadians(lowAngle), Math.toRadians(highAngle), Math.toRadians(step));
         //writeHoughImage("hough.pgm", h);
@@ -150,8 +151,10 @@ public class FindSkew
                 max = squares[i];
             }
         }
-        //System.out.println("Found max angle!");
-        return -(maxTheta*step + lowAngle);
+
+        double skew = -(maxTheta*step + lowAngle);
+        System.out.println("Skew: "+skew);
+        return skew;
     }
 
     public static void main(String[] args)

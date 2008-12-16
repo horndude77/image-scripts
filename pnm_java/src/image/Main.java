@@ -257,7 +257,12 @@ public class Main
                 }
                 if(deskew)
                 {
-                    Pbm bwImage = image.toPbm(new GlobalThresholder(0.45));
+                    Pbm bwImage = image.toPbm(new OtsuThresholder());
+                    //Don't use noise in border to determine skew.
+                    if(border)
+                    {
+                        Border.blankBorder(bwImage, topBorder, bottomBorder, leftBorder, rightBorder);
+                    }
                     double angleDegrees = FindSkew.findSkew(bwImage);
                     image = image.centerRotate(-angleDegrees);
                 }
