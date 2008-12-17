@@ -107,6 +107,15 @@ public class Border
         int rowShift = (top + bottom)/2 - top;
         int colShift = (left + right)/2 - left;
 
+        return shift(image, rowShift, colShift);
+    }
+
+    public static Pbm shift(Pbm image, int rowShift, int colShift)
+    {
+        int rows = image.getRows();
+        int cols = image.getCols();
+
+        //determing how far to shift image
         System.out.println("rowShift: "+rowShift+", "+"colShift: "+colShift);
 
         Pbm output = new Pbm(rows, cols);
@@ -118,5 +127,34 @@ public class Border
             }
         }
         return output;
+    }
+
+    public static Pbm centerImageMass(Pbm image)
+    {
+        System.out.println("Centering image on page...");
+        int rows = image.getRows();
+        int cols = image.getCols();
+        double cx=0, cy=0, mass=0;
+
+        for(int row=0; row<rows; ++row)
+        {
+            for(int col=0; col<cols; ++col)
+            {
+                if(image.get(row, col) == Pbm.BLACK)
+                {
+                    cx += col;
+                    cy += row;
+                    mass += 1;
+                }
+            }
+        }
+
+        cx = cx/mass;
+        cy = cy/mass;
+
+        int rowShift = (int) (cy - rows/2);
+        int colShift = (int) (cx - cols/2);
+
+        return shift(image, rowShift, colShift);
     }
 }

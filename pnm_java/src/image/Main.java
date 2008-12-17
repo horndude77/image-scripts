@@ -32,7 +32,8 @@ public class Main
             double cutoffPercentage = -1.0;
             String removalMethod = "blank_rectangle";
 
-            boolean center = false;
+            boolean centerBorder = false;
+            boolean centerMass = false;
             boolean border = false;
             int topBorder = 0;
             int bottomBorder = 0;
@@ -50,7 +51,11 @@ public class Main
                 }
                 if("-center".equals(args[index]))
                 {
-                    center = true;
+                    centerBorder = true;
+                }
+                if("-center_mass".equals(args[index]))
+                {
+                    centerMass = true;
                 }
                 else if("-border".equals(args[index]))
                 {
@@ -177,7 +182,8 @@ public class Main
 
                 if(deskew)
                 {
-                    double angleDegrees = FindSkew.findSkew(image);
+                    Pbm staffImage = StaffDetection.markStaves(image);
+                    double angleDegrees = FindSkew.findSkew(staffImage);
                     image = image.centerRotate(-angleDegrees);
                 }
                 if(rotate)
@@ -188,9 +194,13 @@ public class Main
                 {
                     Border.blankBorder(image, topBorder, bottomBorder, leftBorder, rightBorder);
                 }
-                if(center)
+                if(centerBorder)
                 {
                     image = Border.centerImage(image);
+                }
+                if(centerMass)
+                {
+                    image = Border.centerImageMass(image);
                 }
                 if(subimageRemoval)
                 {
@@ -257,12 +267,16 @@ public class Main
                 }
                 if(deskew)
                 {
-                    Pbm bwImage = image.toPbm(new OtsuThresholder());
-                    //Don't use noise in border to determine skew.
-                    if(border)
+                    Pbm bwImage;
+                    if(thresholder == null)
                     {
-                        Border.blankBorder(bwImage, topBorder, bottomBorder, leftBorder, rightBorder);
+                        bwImage = image.toPbm(new OtsuThresholder());
                     }
+                    else
+                    {
+                        bwImage = image.toPbm(thresholder);
+                    }
+                    bwImage = StaffDetection.markStaves(bwImage);
                     double angleDegrees = FindSkew.findSkew(bwImage);
                     image = image.centerRotate(-angleDegrees);
                 }
@@ -281,9 +295,13 @@ public class Main
                     {
                         Border.blankBorder(output, topBorder, bottomBorder, leftBorder, rightBorder);
                     }
-                    if(center)
+                    if(centerBorder)
                     {
                         output = Border.centerImage(output);
+                    }
+                    if(centerMass)
+                    {
+                        output = Border.centerImageMass(output);
                     }
                 }
 
