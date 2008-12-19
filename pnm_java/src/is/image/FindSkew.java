@@ -2,15 +2,12 @@ package is.image;
 
 import is.image.pnm.Pbm;
 import is.image.pnm.Pgm;
+import is.util.ConcurrentUtil;
 
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class FindSkew
 {
-    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
-
     /**
      * Perform the hough transform on the image.
      *
@@ -38,7 +35,7 @@ public class FindSkew
             cosTable[i] = Math.cos(theta);
         }
 
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        ThreadPoolExecutor pool = ConcurrentUtil.createThreadPool();
 
         for(int rowc=0; rowc<rows; ++rowc)
         {
@@ -61,15 +58,7 @@ public class FindSkew
                 }
             });
         }
-        try
-        {
-            pool.shutdown();
-            pool.awaitTermination(1000, TimeUnit.SECONDS);
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        ConcurrentUtil.shutdownPoolAndAwaitTermination(pool);
         //System.out.println("Finished hough!");
         return h;
     }

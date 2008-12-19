@@ -2,15 +2,13 @@ package is.image;
 
 import is.image.BilevelImage;
 import is.image.threshold.Thresholder;
+import is.util.ConcurrentUtil;
+
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class GrayscaleImage
     implements Comparable<GrayscaleImage>
 {
-    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
-
     private int rows, cols;
     short maxval;
     private short[][] data;
@@ -252,8 +250,7 @@ public class GrayscaleImage
 
     public GrayscaleImage rotate(final double angle_degrees, final double cx, final double cy)
     {
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        //System.out.println("Number of processors available: "+NUM_PROCESSORS);
+        ThreadPoolExecutor pool = ConcurrentUtil.createThreadPool();
 
         final GrayscaleImage rotated = new GrayscaleImage(rows, cols, maxval);
         final short defaultBackground = maxval;
@@ -282,15 +279,7 @@ public class GrayscaleImage
                 }
             });
         }
-        try
-        {
-            pool.shutdown();
-            pool.awaitTermination(1000, TimeUnit.SECONDS);
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        ConcurrentUtil.shutdownPoolAndAwaitTermination(pool);
         //System.out.println("Finished rotating!");
         return rotated;
     }

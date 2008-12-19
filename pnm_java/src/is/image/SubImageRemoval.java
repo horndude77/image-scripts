@@ -1,15 +1,12 @@
 package is.image;
 
 import is.image.pnm.Pbm;
+import is.util.ConcurrentUtil;
 
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class SubImageRemoval
 {
-    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
-
     public static void blankRectangle(BilevelImage image, int rowStart, int colStart, int rows, int cols)
     {
         System.out.println("Blanking "+rows+"x"+cols+" rectangle at: ("+rowStart+", "+colStart+")");
@@ -109,7 +106,7 @@ public class SubImageRemoval
 
         final int goodEnough = 100;
 
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        ThreadPoolExecutor pool = ConcurrentUtil.createThreadPool();
         final Object lock = new Object();
 
         //Lame. See above.
@@ -144,15 +141,7 @@ public class SubImageRemoval
                 }
             });
         }
-        try
-        {
-            pool.shutdown();
-            pool.awaitTermination(1000, TimeUnit.SECONDS);
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        ConcurrentUtil.shutdownPoolAndAwaitTermination(pool);
 
         if(best[0] == -1)
         {

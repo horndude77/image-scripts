@@ -1,14 +1,12 @@
 package is.image;
 
+import is.util.ConcurrentUtil;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class BilevelImage
 {
     public static final byte BLACK = 0x01;
     public static final byte WHITE = 0x00;
-    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
     private int rows, cols;
     private byte[][] data;
@@ -83,8 +81,7 @@ public class BilevelImage
 
     public BilevelImage rotate(final double angle_degrees, final double cx, final double cy)
     {
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        //System.out.println("Number of processors available: "+NUM_PROCESSORS);
+        ThreadPoolExecutor pool = ConcurrentUtil.createThreadPool();
 
         final BilevelImage rotated = new BilevelImage(rows, cols);
 
@@ -141,15 +138,7 @@ public class BilevelImage
                 }
             });
         }
-        try
-        {
-            pool.shutdown();
-            pool.awaitTermination(1000, TimeUnit.SECONDS);
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
+        ConcurrentUtil.shutdownPoolAndAwaitTermination(pool);
         //System.out.println("Finished rotating!");
         return rotated;
     }
