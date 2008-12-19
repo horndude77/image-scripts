@@ -1,7 +1,6 @@
 package is.image;
 
-import is.image.util.Pair;
-import is.image.util.DisjointSet;
+import is.util.DisjointSet;
 import java.util.Queue;
 import java.util.LinkedList;
 

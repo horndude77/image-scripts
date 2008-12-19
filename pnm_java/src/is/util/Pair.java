@@ -1,4 +1,4 @@
-package is.image.util;
+package is.util;
 
 public class Pair<A,B>
 {

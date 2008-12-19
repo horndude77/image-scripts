@@ -1,4 +1,4 @@
-package is.image.util;
+package is.util;
 
 import java.util.Map;
 import java.util.HashMap;

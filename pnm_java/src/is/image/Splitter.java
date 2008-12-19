@@ -2,7 +2,7 @@ package is.image;
 
 import is.image.pnm.Pbm;
 import is.image.pnm.Pgm;
-import is.image.util.Pair;
+import is.util.Pair;
 
 public class Splitter
 {
