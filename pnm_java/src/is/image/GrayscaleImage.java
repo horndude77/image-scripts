@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GrayscaleImage
+    implements Comparable<GrayscaleImage>
 {
     public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
@@ -322,6 +323,25 @@ public class GrayscaleImage
             }
         }
         return out;
+    }
+
+    public int compareTo(GrayscaleImage other)
+    {
+        //compare based on size
+        int size = rows * cols;
+        int otherSize = other.rows * other.cols;
+        if(size < otherSize)
+        {
+            return -1;
+        }
+        else if(size > otherSize)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
     }
 
     public String toString()

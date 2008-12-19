@@ -2,7 +2,7 @@ package is.image;
 
 import is.image.pnm.Pbm;
 import is.image.pnm.Pgm;
-import is.util.Pair;
+import is.util.tuple.Pair;
 
 public class Splitter
 {
@@ -79,7 +79,7 @@ public class Splitter
         GrayscaleImage input = Pgm.read(inputFilename);
         Pair<GrayscaleImage,GrayscaleImage> outputs = split(input);
         Pgm.write(outputFilename1, outputs.getFirst());
-        Pgm.write(outputFilename2, outputs.getSecond());
+        Pgm.write(outputFilename2, outputs.getRest());
     }
 }
 
