@@ -2,6 +2,7 @@ package is.image;
 
 import is.image.pnm.Pbm;
 import is.image.pnm.Pgm;
+import is.image.util.Pair;
 
 public class Splitter
 {
@@ -33,7 +34,7 @@ public class Splitter
         return minCol;
     }
 
-    public static GrayscaleImage[] split(GrayscaleImage input)
+    public static Pair<GrayscaleImage,GrayscaleImage> split(GrayscaleImage input)
     {
         int rows = input.getRows();
         int cols = input.getCols();
@@ -59,7 +60,7 @@ public class Splitter
             }
         }
 
-        return new GrayscaleImage[]{out1, out2};
+        return new Pair<GrayscaleImage,GrayscaleImage>(out1, out2);
     }
 
     public static void main(String args[])
@@ -76,9 +77,9 @@ public class Splitter
         String outputFilename2 = args[2];
 
         GrayscaleImage input = Pgm.read(inputFilename);
-        GrayscaleImage[] outputs = split(input);
-        Pgm.write(outputFilename1, outputs[0]);
-        Pgm.write(outputFilename2, outputs[1]);
+        Pair<GrayscaleImage,GrayscaleImage> outputs = split(input);
+        Pgm.write(outputFilename1, outputs.getFirst());
+        Pgm.write(outputFilename2, outputs.getSecond());
     }
 }
 
