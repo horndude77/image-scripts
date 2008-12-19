@@ -1,6 +1,6 @@
-package image.pnm;
+package is.image.pnm;
 
-import image.util.Histogram;
+import is.image.util.Histogram;
 
 public class OtsuThresholder
     implements Thresholder

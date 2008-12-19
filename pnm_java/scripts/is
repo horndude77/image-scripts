@@ -1,4 +1,4 @@
 #!/bin/sh
 SCRIPT_DIR=`dirname $0`
 export CLASSPATH=$CLASSPATH:$SCRIPT_DIR/../dist/JavaPnm.jar
-java -Xmx1280m image.Main $@
+java -Xmx1280m is.image.Main $@

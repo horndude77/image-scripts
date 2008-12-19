@@ -1,8 +1,8 @@
-package image;
+package is.image;
 
-import image.pnm.Pbm;
-import image.util.Pair;
-import image.util.DisjointSet;
+import is.image.pnm.Pbm;
+import is.image.util.Pair;
+import is.image.util.DisjointSet;
 import java.util.Queue;
 import java.util.LinkedList;
 

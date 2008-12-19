@@ -1,4 +1,4 @@
-package image.util;
+package is.image.util;
 
 public class ArrayUtil
 {

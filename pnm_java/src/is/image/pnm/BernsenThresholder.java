@@ -1,6 +1,6 @@
-package image.pnm;
+package is.image.pnm;
 
-import image.util.ArrayUtil;
+import is.image.util.ArrayUtil;
 
 public class BernsenThresholder
     implements Thresholder

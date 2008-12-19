@@ -1,6 +1,6 @@
-package image;
+package is.image;
 
-import image.pnm.Pbm;
+import is.image.pnm.Pbm;
 
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

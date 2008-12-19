@@ -1,4 +1,4 @@
-package image.pnm;
+package is.image.pnm;
 
 import image.util.ArrayUtil;
 import java.io.BufferedOutputStream;

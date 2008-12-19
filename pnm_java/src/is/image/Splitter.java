@@ -1,7 +1,7 @@
-package image;
+package is.image;
 
-import image.pnm.Pbm;
-import image.pnm.Pgm;
+import is.image.pnm.Pbm;
+import is.image.pnm.Pgm;
 
 public class Splitter
 {

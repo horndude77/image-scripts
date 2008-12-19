@@ -1,6 +1,6 @@
-package image;
+package is.image;
 
-import image.pnm.*;
+import is.image.pnm.*;
 
 public class Main
 {

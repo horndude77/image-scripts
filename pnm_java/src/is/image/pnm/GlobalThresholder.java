@@ -1,4 +1,4 @@
-package image.pnm;
+package is.image.pnm;
 
 public class GlobalThresholder
     implements Thresholder

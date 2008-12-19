@@ -1,4 +1,4 @@
-package image.pnm;
+package is.image.pnm;
 
 /**
  * Computes the threshold function based on running averages. The running

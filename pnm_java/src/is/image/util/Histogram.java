@@ -1,6 +1,6 @@
-package image.util;
+package is.image.util;
 
-import image.pnm.Pbm;
+import is.image.pnm.Pbm;
 
 public class Histogram
 {
