@@ -10,19 +10,19 @@ public class SubImageRemoval
 {
     public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
-    public static void blankRectangle(Pbm image, int rowStart, int colStart, int rows, int cols)
+    public static void blankRectangle(BilevelImage image, int rowStart, int colStart, int rows, int cols)
     {
         System.out.println("Blanking "+rows+"x"+cols+" rectangle at: ("+rowStart+", "+colStart+")");
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                image.set(rowStart+row, colStart+col, Pbm.WHITE);
+                image.set(rowStart+row, colStart+col, BilevelImage.WHITE);
             }
         }
     }
 
-    public static void invertSubImage(Pbm image, Pbm sub, int rowStart, int colStart)
+    public static void invertSubImage(BilevelImage image, BilevelImage sub, int rowStart, int colStart)
     {
         System.out.println("Inverting logo at: ("+rowStart+", "+colStart+")");
         int rows = sub.getRows();
@@ -32,15 +32,15 @@ public class SubImageRemoval
         {
             for(int col=0; col<cols; ++col)
             {
-                if(sub.get(row, col) == Pbm.BLACK)
+                if(sub.get(row, col) == BilevelImage.BLACK)
                 {
-                    image.set(rowStart+row, colStart+col, Pbm.WHITE);
+                    image.set(rowStart+row, colStart+col, BilevelImage.WHITE);
                 }
             }
         }
     }
 
-    public static int firstNonBlankRow(Pbm image)
+    public static int firstNonBlankRow(BilevelImage image)
     {
         int rows = image.getRows();
         int cols = image.getCols();
@@ -48,7 +48,7 @@ public class SubImageRemoval
         {
             for(int col=0; col<cols; ++col)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     return row;
                 }
@@ -57,7 +57,7 @@ public class SubImageRemoval
         return rows;
     }
 
-    public static int scoreSection(Pbm main, Pbm sub, int rowStart, int colStart, int cutoff)
+    public static int scoreSection(BilevelImage main, BilevelImage sub, int rowStart, int colStart, int cutoff)
     {
         int rows = sub.getRows();
         int cols = sub.getCols();
@@ -89,7 +89,7 @@ public class SubImageRemoval
         return score;
     }
 
-    public static int[] findImage(final Pbm main, final Pbm sub, int startRowInput, final int rowCount, final int startCol, final int colCount, final int cutoff)
+    public static int[] findImage(final BilevelImage main, final BilevelImage sub, int startRowInput, final int rowCount, final int startCol, final int colCount, final int cutoff)
     {
         //System.out.println("Finding subimage...");
         //skip a bunch of rows.
@@ -181,8 +181,8 @@ public class SubImageRemoval
         int colCount = Integer.parseInt(args[7]);
         String removalMethod = args[8];
 
-        Pbm main = new Pbm(mainFilename);
-        Pbm sub = new Pbm(subFilename);
+        BilevelImage main = Pbm.read(mainFilename);
+        BilevelImage sub = Pbm.read(subFilename);
 
         //-1 indicated full range or default for these arguments.
         rowCount = (rowCount == -1) ? main.getRows() : rowCount;
@@ -208,7 +208,7 @@ public class SubImageRemoval
         {
             e.printStackTrace();
         }
-        main.write(outFilename);
+        Pbm.write(outFilename, main);
     }
 }
 

@@ -1,10 +1,8 @@
 package is.image;
 
-import is.image.pnm.Pbm;
-
 public class Border
 {
-    public static void blankBorder(Pbm image, int topBorder, int bottomBorder, int leftBorder, int rightBorder)
+    public static void blankBorder(BilevelImage image, int topBorder, int bottomBorder, int leftBorder, int rightBorder)
     {
         System.out.println("Removing border pixels...");
         int rows = image.getRows();
@@ -14,33 +12,33 @@ public class Border
         {
             for(int col=0; col<cols; ++col)
             {
-                image.set(row, col, Pbm.WHITE);
+                image.set(row, col, BilevelImage.WHITE);
             }
         }
         for(int row=rows-bottomBorder; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
-                image.set(row, col, Pbm.WHITE);
+                image.set(row, col, BilevelImage.WHITE);
             }
         }
         for(int col=0; col<=leftBorder; ++col)
         {
             for(int row=0; row<rows; ++row)
             {
-                image.set(row, col, Pbm.WHITE);
+                image.set(row, col, BilevelImage.WHITE);
             }
         }
         for(int col=cols-rightBorder; col<cols; ++col)
         {
             for(int row=0; row<rows; ++row)
             {
-                image.set(row, col, Pbm.WHITE);
+                image.set(row, col, BilevelImage.WHITE);
             }
         }
     }
 
-    public static Pbm centerImage(Pbm image)
+    public static BilevelImage centerImage(BilevelImage image)
     {
         System.out.println("Centering image on page...");
 
@@ -54,7 +52,7 @@ public class Border
         {
             for(int col=0; col<cols; ++col)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     top = row;
                     break outer;
@@ -67,7 +65,7 @@ public class Border
         {
             for(int col=0; col<cols; ++col)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     bottom = rows - row;
                     break outer;
@@ -80,7 +78,7 @@ public class Border
         {
             for(int row=0; row<rows; ++row)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     left = col;
                     break outer;
@@ -93,7 +91,7 @@ public class Border
         {
             for(int row=0; row<rows; ++row)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     right = cols - col;
                     break outer;
@@ -110,7 +108,7 @@ public class Border
         return shift(image, rowShift, colShift);
     }
 
-    public static Pbm shift(Pbm image, int rowShift, int colShift)
+    public static BilevelImage shift(BilevelImage image, int rowShift, int colShift)
     {
         int rows = image.getRows();
         int cols = image.getCols();
@@ -118,7 +116,7 @@ public class Border
         //determing how far to shift image
         System.out.println("rowShift: "+rowShift+", "+"colShift: "+colShift);
 
-        Pbm output = new Pbm(rows, cols);
+        BilevelImage output = new BilevelImage(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
@@ -129,7 +127,7 @@ public class Border
         return output;
     }
 
-    public static Pbm centerImageMass(Pbm image)
+    public static BilevelImage centerImageMass(BilevelImage image)
     {
         System.out.println("Centering image on page...");
         int rows = image.getRows();
@@ -140,7 +138,7 @@ public class Border
         {
             for(int col=0; col<cols; ++col)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     cx += col;
                     cy += row;

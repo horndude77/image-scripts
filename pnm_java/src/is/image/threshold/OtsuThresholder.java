@@ -1,5 +1,7 @@
-package is.image.pnm;
+package is.image.threshold;
 
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
 import is.image.util.Histogram;
 
 public class OtsuThresholder
@@ -24,7 +26,7 @@ public class OtsuThresholder
         return out;
     }
 
-    public Pbm threshold(Pgm input)
+    public BilevelImage threshold(GrayscaleImage input)
     {
         System.out.println("Performing Otsu Thresholding...");
         int rows = input.getRows();

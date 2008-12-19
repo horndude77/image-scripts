@@ -1,5 +1,7 @@
-package is.image.pnm;
+package is.image.threshold;
 
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
 import is.image.util.ArrayUtil;
 
 public class BernsenThresholder
@@ -14,7 +16,7 @@ public class BernsenThresholder
         this.l = l;
     }
 
-    public Pbm threshold(Pgm input)
+    public BilevelImage threshold(GrayscaleImage input)
     {
         System.out.println("Applying Bernsen thresholding...");
         int rows = input.getRows();
@@ -23,7 +25,7 @@ public class BernsenThresholder
         short[][] data = input.getData();
 
         int n = (neighborhood-1)/2;
-        Pbm out = new Pbm(rows, cols);
+        BilevelImage out = new BilevelImage(rows, cols);
         short[][] max = ArrayUtil.maxNeighborhoods(data, neighborhood);
         short[][] min = ArrayUtil.minNeighborhoods(data, neighborhood);
         for(int row=0; row<rows; ++row)
@@ -38,7 +40,7 @@ public class BernsenThresholder
                     //This indicates that the block is uniform. For now assume
                     //white background.
                     //System.out.println("Uniform section: " + (high-low) + " < " + l);
-                    out.set(row, col, Pbm.WHITE);
+                    out.set(row, col, BilevelImage.WHITE);
                 }
                 else
                 {
@@ -47,12 +49,12 @@ public class BernsenThresholder
                     if(data[row][col] > threshold)
                     {
                         //System.out.println("\tWHITE");
-                        out.set(row, col, Pbm.WHITE);
+                        out.set(row, col, BilevelImage.WHITE);
                     }
                     else
                     {
                         //System.out.println("\tBLACK");
-                        out.set(row, col, Pbm.BLACK);
+                        out.set(row, col, BilevelImage.BLACK);
                     }
                 }
             }

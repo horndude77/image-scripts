@@ -1,13 +1,11 @@
 package is.image;
 
-import is.image.pnm.Pbm;
-import is.image.pnm.Pgm;
-import is.image.pnm.OtsuThresholder;
+import is.image.threshold.OtsuThresholder;
 import is.image.util.Histogram;
 
 public class StaffDetection
 {
-    public static int determineStaffHeight(Pbm image)
+    public static int determineStaffHeight(BilevelImage image)
     {
         System.out.println("Determining Staff Height...");
         int rows = image.getRows();
@@ -22,7 +20,7 @@ public class StaffDetection
             currLength = 0;
             for(int row=0; row<rows; ++row)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     ++currLength;
                 }
@@ -50,27 +48,27 @@ public class StaffDetection
         return staffHeight;
     }
 
-    public static Pbm markStaves(Pbm image)
+    public static BilevelImage markStaves(BilevelImage image)
     {
         int rows = image.getRows();
         int cols = image.getCols();
         int staffHeight = determineStaffHeight(image);
 
         //make new pbm which marks these spots.
-        Pbm staffSpots = new Pbm(rows, cols);
+        BilevelImage staffSpots = new BilevelImage(rows, cols);
         int currLength = 0;
         for(int col=0; col<cols; ++col)
         {
             currLength = 0;
             for(int row=0; row<rows; ++row)
             {
-                if(image.get(row, col) == Pbm.BLACK)
+                if(image.get(row, col) == BilevelImage.BLACK)
                 {
                     ++currLength;
                 }
                 else if(currLength > 0 && Math.abs(currLength-staffHeight) < 1)
                 {
-                    staffSpots.set(row-currLength, col, Pbm.BLACK);
+                    staffSpots.set(row-currLength, col, BilevelImage.BLACK);
                     currLength = 0;
                 }
                 else if(currLength > 0)

@@ -1,6 +1,7 @@
 package is.image;
 
 import is.image.pnm.*;
+import is.image.threshold.*;
 
 public class Main
 {
@@ -163,10 +164,10 @@ public class Main
             //Perform operations
             if(inputFilename.matches(".*\\.pbm$"))
             {
-                Pbm image = null;
+                BilevelImage image = null;
                 try
                 {
-                    image = new Pbm(inputFilename);
+                    image = Pbm.read(inputFilename);
                 }
                 catch(java.io.IOException e)
                 {
@@ -182,7 +183,7 @@ public class Main
 
                 if(deskew)
                 {
-                    Pbm staffImage = StaffDetection.markStaves(image);
+                    BilevelImage staffImage = StaffDetection.markStaves(image);
                     double angleDegrees = FindSkew.findSkew(staffImage);
                     image = image.centerRotate(-angleDegrees);
                 }
@@ -204,10 +205,10 @@ public class Main
                 }
                 if(subimageRemoval)
                 {
-                    Pbm sub = null;
+                    BilevelImage sub = null;
                     try
                     {
-                        sub = new Pbm(subimageFilename);
+                        sub = Pbm.read(subimageFilename);
                     }
                     catch(java.io.IOException e)
                     {
@@ -237,7 +238,7 @@ public class Main
 
                 try
                 {
-                    image.write(outputFilename);
+                    Pbm.write(outputFilename, image);
                 }
                 catch(java.io.IOException e)
                 {
@@ -248,11 +249,11 @@ public class Main
             }
             else if(inputFilename.matches(".*\\.pgm$"))
             {
-                Pbm output = null;
-                Pgm image = null;
+                BilevelImage output = null;
+                GrayscaleImage image = null;
                 try
                 {
-                    image = new Pgm(inputFilename);
+                    image = Pgm.read(inputFilename);
                 }
                 catch(java.io.IOException e)
                 {
@@ -267,14 +268,14 @@ public class Main
                 }
                 if(deskew)
                 {
-                    Pbm bwImage;
+                    BilevelImage bwImage;
                     if(thresholder == null)
                     {
-                        bwImage = image.toPbm(new OtsuThresholder());
+                        bwImage = image.toBilevelImage(new OtsuThresholder());
                     }
                     else
                     {
-                        bwImage = image.toPbm(thresholder);
+                        bwImage = image.toBilevelImage(thresholder);
                     }
                     bwImage = StaffDetection.markStaves(bwImage);
                     double angleDegrees = FindSkew.findSkew(bwImage);
@@ -286,7 +287,7 @@ public class Main
                 }
                 if(thresholder != null)
                 {
-                    output = image.toPbm(thresholder, postprocess, energyThreshold);
+                    output = image.toBilevelImage(thresholder, postprocess, energyThreshold);
                     if(removeBlobs)
                     {
                         BlobRemover.removeBlobs(output, minBlobSize);
@@ -309,11 +310,11 @@ public class Main
                 {
                     if(output != null)
                     {
-                        output.write(outputFilename);
+                        Pbm.write(outputFilename, output);
                     }
                     else
                     {
-                        image.write(outputFilename);
+                        Pgm.write(outputFilename, image);
                     }
                 }
                 catch(java.io.IOException e)

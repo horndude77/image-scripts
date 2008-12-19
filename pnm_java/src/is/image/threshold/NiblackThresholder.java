@@ -1,5 +1,7 @@
-package is.image.pnm;
+package is.image.threshold;
 
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
 import is.image.util.ArrayUtil;
 
 public class NiblackThresholder
@@ -18,7 +20,7 @@ public class NiblackThresholder
         this.k = k;
     }
 
-    public Pbm threshold(Pgm input)
+    public BilevelImage threshold(GrayscaleImage input)
     {
         System.out.println("Calculating Niblack thresholding...");
         int rows = input.getRows();
@@ -32,18 +34,18 @@ public class NiblackThresholder
         double[][] threshold = ArrayUtil.add(dataFloat, mean, ArrayUtil.multiplyEach(dataFloat, stdev, k));
 
         System.out.println("Applying Niblack thresholding...");
-        Pbm out = new Pbm(rows, cols);
+        BilevelImage out = new BilevelImage(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
                 if(data[row][col] > threshold[row][col])
                 {
-                    out.set(row, col, Pbm.WHITE);
+                    out.set(row, col, BilevelImage.WHITE);
                 }
                 else
                 {
-                    out.set(row, col, Pbm.BLACK);
+                    out.set(row, col, BilevelImage.BLACK);
                 }
             }
         }

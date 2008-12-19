@@ -5,7 +5,7 @@ import is.image.pnm.Pgm;
 
 public class Splitter
 {
-    public static int findMiddle(Pgm input)
+    public static int findMiddle(GrayscaleImage input)
     {
         int rows = input.getRows();
         int cols = input.getCols();
@@ -33,7 +33,7 @@ public class Splitter
         return minCol;
     }
 
-    public static Pgm[] split(Pgm input)
+    public static GrayscaleImage[] split(GrayscaleImage input)
     {
         int rows = input.getRows();
         int cols = input.getCols();
@@ -41,7 +41,7 @@ public class Splitter
 
         int splitCol = findMiddle(input);
 
-        Pgm out1 = new Pgm(rows, splitCol, maxval);
+        GrayscaleImage out1 = new GrayscaleImage(rows, splitCol, maxval);
         for(int row=0; row<rows;++row)
         {
             for(int col=0; col<splitCol; ++col)
@@ -50,7 +50,7 @@ public class Splitter
             }
         }
 
-        Pgm out2 = new Pgm(rows, cols-splitCol, maxval);
+        GrayscaleImage out2 = new GrayscaleImage(rows, cols-splitCol, maxval);
         for(int row=0; row<rows;++row)
         {
             for(int col=splitCol; col<cols; ++col)
@@ -59,7 +59,7 @@ public class Splitter
             }
         }
 
-        return new Pgm[]{out1, out2};
+        return new GrayscaleImage[]{out1, out2};
     }
 
     public static void main(String args[])
@@ -75,10 +75,10 @@ public class Splitter
         String outputFilename1 = args[1];
         String outputFilename2 = args[2];
 
-        Pgm input = new Pgm(inputFilename);
-        Pgm[] outputs = split(input);
-        outputs[0].write(outputFilename1);
-        outputs[1].write(outputFilename2);
+        GrayscaleImage input = Pgm.read(inputFilename);
+        GrayscaleImage[] outputs = split(input);
+        Pgm.write(outputFilename1, outputs[0]);
+        Pgm.write(outputFilename2, outputs[1]);
     }
 }
 

@@ -1,4 +1,7 @@
-package is.image.pnm;
+package is.image.threshold;
+
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
 
 public class GlobalThresholder
     implements Thresholder
@@ -10,7 +13,7 @@ public class GlobalThresholder
         this.thresholdPercentage = thresholdPercentage;
     }
 
-    public Pbm threshold(Pgm input)
+    public BilevelImage threshold(GrayscaleImage input)
     {
         //Simple thresholding
         int rows = input.getRows();
@@ -19,18 +22,18 @@ public class GlobalThresholder
         short[][] data = input.getData();
 
         int threshold = (int) (maxval * thresholdPercentage);
-        Pbm out = new Pbm(rows, cols);
+        BilevelImage out = new BilevelImage(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
                 if(data[row][col] > threshold)
                 {
-                    out.set(row, col, Pbm.WHITE);
+                    out.set(row, col, BilevelImage.WHITE);
                 }
                 else
                 {
-                    out.set(row, col, Pbm.BLACK);
+                    out.set(row, col, BilevelImage.BLACK);
                 }
             }
         }

@@ -2,7 +2,7 @@ package is.image;
 
 import is.image.pnm.Pbm;
 import is.image.pnm.Pgm;
-import is.image.pnm.OtsuThresholder;
+import is.image.threshold.OtsuThresholder;
 
 public class Deskew
 {
@@ -19,18 +19,18 @@ public class Deskew
 
         if(input_filename.matches(".*\\.pbm$"))
         {
-            Pbm image = new Pbm(input_filename);
+            BilevelImage image = Pbm.read(input_filename);
             double angleDegrees = FindSkew.findSkew(image);
-            Pbm rotated = image.centerRotate(-angleDegrees);
-            rotated.write(output_filename);
+            BilevelImage rotated = image.centerRotate(-angleDegrees);
+            Pbm.write(output_filename, rotated);
         }
         else if(input_filename.matches(".*\\.pgm$"))
         {
-            Pgm image = new Pgm(input_filename);
-            Pbm bwImage = image.toPbm(new OtsuThresholder());
+            GrayscaleImage image = Pgm.read(input_filename);
+            BilevelImage bwImage = image.toBilevelImage(new OtsuThresholder());
             double angleDegrees = FindSkew.findSkew(bwImage);
-            Pgm rotated = image.centerRotate(-angleDegrees);
-            rotated.write(output_filename);
+            GrayscaleImage rotated = image.centerRotate(-angleDegrees);
+            Pgm.write(output_filename, rotated);
         }
     }
 }

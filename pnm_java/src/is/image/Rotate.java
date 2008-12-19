@@ -19,10 +19,10 @@ public class Rotate
 
         if(input_filename.matches(".*\\.pbm$"))
         {
-            Pbm image = null;
+            BilevelImage image = null;
             try
             {
-                image = new Pbm(input_filename);
+                image = Pbm.read(input_filename);
             }
             catch(java.io.IOException e)
             {
@@ -31,7 +31,7 @@ public class Rotate
                 System.exit(-1);
             }
 
-            Pbm rotated = image.centerRotate(angle);
+            BilevelImage rotated = image.centerRotate(angle);
 
             if(!output_filename.matches(".*\\.pbm$"))
             {
@@ -40,7 +40,7 @@ public class Rotate
 
             try
             {
-                rotated.write(output_filename);
+                Pbm.write(output_filename, rotated);
             }
             catch(java.io.IOException e)
             {
@@ -51,10 +51,10 @@ public class Rotate
         }
         else if(input_filename.matches(".*\\.pgm$"))
         {
-            Pgm image = null;
+            GrayscaleImage image = null;
             try
             {
-                image = new Pgm(input_filename);
+                image = Pgm.read(input_filename);
             }
             catch(java.io.IOException e)
             {
@@ -63,7 +63,7 @@ public class Rotate
                 System.exit(-1);
             }
 
-            Pgm rotated = image.centerRotate(angle);
+            GrayscaleImage rotated = image.centerRotate(angle);
 
             if(!output_filename.matches(".*\\.pgm$"))
             {
@@ -72,7 +72,7 @@ public class Rotate
 
             try
             {
-                rotated.write(output_filename);
+                Pgm.write(output_filename, rotated);
             }
             catch(java.io.IOException e)
             {

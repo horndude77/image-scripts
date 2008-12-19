@@ -1,5 +1,9 @@
 package is.image.pnm;
 
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
+import is.image.threshold.*;
+
 public class PgmToPbm
 {
     public static void main(String[] args)
@@ -14,13 +18,13 @@ public class PgmToPbm
         String inputPgm = args[0];
         String outputPbm = args[1];
 
-        Pgm in = new Pgm(inputPgm);
-        //Pbm out = in.toPbm(new GlobalThresholder(0.45));
-        //Pbm out = in.toPbm(new BernsenThresholder(75, 15));
-        //Pbm out = in.toPbm(new NiblackThresholder(75, -0.3));
-        Pbm out = in.toPbm(new RunningAverageThresholder(30, 0.88));
+        GrayscaleImage in = Pgm.read(inputPgm);
+        //BilevelImage out = in.toBilevelImage(new GlobalThresholder(0.45));
+        //BilevelImage out = in.toBilevelImage(new BernsenThresholder(75, 15));
+        //BilevelImage out = in.toBilevelImage(new NiblackThresholder(75, -0.3));
+        BilevelImage out = in.toBilevelImage(new RunningAverageThresholder(30, 0.88));
         //out.clean();
-        out.write(outputPbm);
+        Pbm.write(outputPbm, out);
     }
 }
 

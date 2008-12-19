@@ -1,4 +1,7 @@
-package is.image.pnm;
+package is.image.threshold;
+
+import is.image.BilevelImage;
+import is.image.GrayscaleImage;
 
 /**
  * Computes the threshold function based on running averages. The running
@@ -27,7 +30,7 @@ public class RunningAverageThresholder
         this.percentageOfThreshold = percentageOfThreshold;
     }
 
-    public Pbm threshold(Pgm input)
+    public BilevelImage threshold(GrayscaleImage input)
     {
         System.out.println("Calculating Running Average thresholding...");
         int rows = input.getRows();
@@ -140,18 +143,18 @@ public class RunningAverageThresholder
 
         System.out.println("Applying Running Average thresholding...");
         //compute binary image.
-        Pbm out = new Pbm(rows, cols);
+        BilevelImage out = new BilevelImage(rows, cols);
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
             {
                 if(data[row][col] > percentageOfThreshold*threshold[row][col])
                 {
-                    out.set(row, col, Pbm.WHITE);
+                    out.set(row, col, BilevelImage.WHITE);
                 }
                 else
                 {
-                    out.set(row, col, Pbm.BLACK);
+                    out.set(row, col, BilevelImage.BLACK);
                 }
             }
         }

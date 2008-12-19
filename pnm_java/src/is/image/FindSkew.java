@@ -19,7 +19,7 @@ public class FindSkew
      * @param highAngle End angle in radians.
      * @param step Step in radians.
      */
-    public static int[][] hough(final Pbm image, final double lowAngle, final double highAngle, final double step)
+    public static int[][] hough(final BilevelImage image, final double lowAngle, final double highAngle, final double step)
     {
         //System.out.println("Performing hough...");
         final int rows = image.getRows();
@@ -49,7 +49,7 @@ public class FindSkew
                 {
                     for(int col=0; col<cols; ++col)
                     {
-                        if(image.get(row, col) == Pbm.BLACK)
+                        if(image.get(row, col) == BilevelImage.BLACK)
                         {
                             for(int theta=0; theta<angleCount; ++theta)
                             {
@@ -101,7 +101,7 @@ public class FindSkew
 
         try
         {
-            (new Pgm(hshort, maxval)).write(filename);
+            Pgm.write(filename, new GrayscaleImage(hshort, maxval));
         }
         catch(Exception e)
         {
@@ -109,7 +109,7 @@ public class FindSkew
         }
     }
 
-    public static double findSkew(Pbm image)
+    public static double findSkew(BilevelImage image)
     {
         System.out.println("Finding skew...");
         double lowAngle = -3.5, highAngle = 3.5, step = 0.05;
@@ -166,9 +166,8 @@ public class FindSkew
             System.exit(-1);
         }
         String filename = args[0];
-        Pbm image = new Pbm(filename);
+        BilevelImage image = Pbm.read(filename);
         double angleDegrees = findSkew(image);
         System.out.println(angleDegrees);
     }
 }
-

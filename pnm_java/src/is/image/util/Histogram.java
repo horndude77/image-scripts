@@ -1,5 +1,6 @@
 package is.image.util;
 
+import is.image.BilevelImage;
 import is.image.pnm.Pbm;
 
 public class Histogram
@@ -19,24 +20,24 @@ public class Histogram
 
         int rows = scale;
         int cols = histogram.length;
-        Pbm image = new Pbm(rows, cols);
+        BilevelImage image = new BilevelImage(rows, cols);
         for(int col=0; col<cols; ++col)
         {
             for(int row=0; row<rows; ++row)
             {
                 if(row > (histogram[col]*scale)/max)
                 {
-                    image.set(rows-row-1, col, Pbm.WHITE);
+                    image.set(rows-row-1, col, BilevelImage.WHITE);
                 }
                 else
                 {
-                    image.set(rows-row-1, col, Pbm.BLACK);
+                    image.set(rows-row-1, col, BilevelImage.BLACK);
                 }
             }
         }
         try
         {
-            image.write(filename);
+            Pbm.write(filename, image);
         }
         catch(Exception e)
         {

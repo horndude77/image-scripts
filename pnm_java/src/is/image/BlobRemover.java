@@ -1,6 +1,5 @@
 package is.image;
 
-import is.image.pnm.Pbm;
 import is.image.util.Pair;
 import is.image.util.DisjointSet;
 import java.util.Queue;
@@ -8,7 +7,7 @@ import java.util.LinkedList;
 
 public class BlobRemover
 {
-    public static void removeBlobs(Pbm image, int minBlobSize)
+    public static void removeBlobs(BilevelImage image, int minBlobSize)
     {
         int rows = image.getRows();
         int cols = image.getCols();

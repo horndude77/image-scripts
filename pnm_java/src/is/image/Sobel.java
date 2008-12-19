@@ -17,9 +17,9 @@ public class Sobel
         String input_filename = args[0];
         String output_filename = args[1];
 
-        Pgm in = new Pgm(input_filename);
-        Pgm sobel = in.sobel();
-        sobel.write(output_filename);
+        GrayscaleImage in = Pgm.read(input_filename);
+        GrayscaleImage sobel = in.sobel();
+        Pgm.write(output_filename, sobel);
     }
 }
 

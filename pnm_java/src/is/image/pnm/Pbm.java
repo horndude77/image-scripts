@@ -1,5 +1,7 @@
 package is.image.pnm;
 
+import is.image.BilevelImage;
+
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
@@ -7,18 +9,11 @@ import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class Pbm
 {
     public static final byte BLACK = 0x01;
     public static final byte WHITE = 0x00;
-    public static final int NUM_PROCESSORS = Runtime.getRuntime().availableProcessors();
-
-    private int rows, cols;
-    private byte[][] data;
 
     /*
      * For a PBM the pixel ordering in the byte is most significant bit to 
@@ -38,27 +33,24 @@ public class Pbm
     private static final byte[] MAGIC = "P4".getBytes();
     private static final byte[] MAGIC_RAW = "P1".getBytes();
 
-    public Pbm(int rows, int cols)
+    private static boolean isWhiteSpace(int b)
     {
-        this.rows = rows;
-        this.cols = cols;
-        this.data = new byte[rows][cols];
+        return b == 0x0A || b == 0x0D || b == 0x20 || b == 0x09;
     }
 
-    public Pbm(InputStream is)
-        throws IOException
+    private static boolean isDigit(int b)
     {
-        read(is);
+        return b >= 0x30 && b <= 0x39;
     }
 
-    public Pbm(String filename)
+    public static BilevelImage read(String filename)
         throws IOException
     {
         InputStream is = null;
         try
         {
             is = new BufferedInputStream(new FileInputStream(filename));
-            this.read(is);
+            return read(is);
         }
         finally
         {
@@ -69,61 +61,7 @@ public class Pbm
         }
     }
 
-    public void set(int row, int col, byte val)
-    {
-        data[row][col] = val;
-    }
-
-    public void invert(int row, int col)
-    {
-        if(data[row][col] == Pbm.BLACK)
-        {
-            data[row][col] = Pbm.WHITE;
-        }
-        else
-        {
-            data[row][col] = Pbm.BLACK;
-        }
-    }
-
-    public byte get(int row, int col)
-    {
-        return data[row][col];
-    }
-
-    public byte getWhiteWhenOutOfRange(int row, int col)
-    {
-        if(row < 0 || row >= rows || col < 0 || col >= cols)
-        {
-            return WHITE;
-        }
-        else
-        {
-            return data[row][col];
-        }
-    }
-
-    public int getRows()
-    {
-        return this.rows;
-    }
-
-    public int getCols()
-    {
-        return this.cols;
-    }
-
-    private boolean isWhiteSpace(int b)
-    {
-        return b == 0x0A || b == 0x0D || b == 0x20 || b == 0x09;
-    }
-
-    private boolean isDigit(int b)
-    {
-        return b >= 0x30 && b <= 0x39;
-    }
-
-    private void read(InputStream is)
+    public static BilevelImage read(InputStream is)
         throws IOException
     {
         //System.out.println("Reading image...");
@@ -177,7 +115,7 @@ public class Pbm
             sb.append((char) b);
             b = is.read();
         }
-        cols = Integer.parseInt(sb.toString());
+        int cols = Integer.parseInt(sb.toString());
 
         //skip whitespace
         while(isWhiteSpace(b))
@@ -192,13 +130,13 @@ public class Pbm
             sb.append((char) b);
             b = is.read();
         }
-        rows = Integer.parseInt(sb.toString());
+        int rows = Integer.parseInt(sb.toString());
 
         //Skip a single whitespace character
         b = is.read();
 
         //read data
-        data = new byte[rows][cols];
+        byte[][] data = new byte[rows][cols];
         if(raw)
         {
             for(int row=0; row<rows; ++row)
@@ -239,17 +177,18 @@ public class Pbm
                 }
             }
         }
+        return new BilevelImage(data);
         //System.out.println("Finished reading!");
     }
 
-    public void write(String filename)
+    public static void write(String filename, BilevelImage image)
         throws IOException
     {
         OutputStream os = null;
         try
         {
             os = new BufferedOutputStream(new FileOutputStream(filename));
-            this.write(os);
+            write(os, image);
         }
         finally
         {
@@ -260,15 +199,18 @@ public class Pbm
         }
     }
 
-    public void write(OutputStream os)
+    public static void write(OutputStream os, BilevelImage image)
         throws IOException
     {
         //System.out.println("Writing image...");
+        int rows = image.getRows();
+        int cols = image.getCols();
         os.write("P4\n".getBytes());
         os.write((cols+" "+rows+"\n").getBytes());
 
         byte b = 0x00;
         int bitIndex = 0;
+        byte[][] data = image.getData();
         for(int row=0; row<rows; ++row)
         {
             for(int col=0; col<cols; ++col)
@@ -295,135 +237,4 @@ public class Pbm
         }
         //System.out.println("Finished writing!");
     }
-
-    public Pbm centerRotate(double angle_degrees)
-    {
-        return this.rotate(angle_degrees, this.cols/2.0, this.rows/2.0);
-    }
-
-    public Pbm rotate(final double angle_degrees, final double cx, final double cy)
-    {
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(NUM_PROCESSORS, NUM_PROCESSORS, 1000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        //System.out.println("Number of processors available: "+NUM_PROCESSORS);
-
-        final Pbm rotated = new Pbm(rows, cols);
-
-        double angle = Math.toRadians(angle_degrees);
-        final double sina = Math.sin(angle);
-        final double cosa = Math.cos(angle);
-
-        for(int rowc=0; rowc<rows; ++rowc)
-        {
-            final int row = rowc;
-            pool.execute(new Runnable()
-            {
-                public void run()
-                {
-                    //System.out.println("Working on row: "+row);
-                    for(int col=0; col<cols; ++col)
-                    {
-                        //location in original
-                        double rx = (col-cx)*cosa - (row-cy)*sina;
-                        double ry = (col-cx)*sina + (row-cy)*cosa;
-                        //integer location in original
-                        int x = (int) (rx+cx);
-                        int y = (int) (ry+cy);
-                        //weights to use for picking value
-                        double wx = 1.0 - (rx - (x - cx));
-                        double wy = 1.0 - (ry - (y - cy));
-
-                        double val = 0.0;
-                        if(x > 0 && x < cols && y > 0 && y < rows)
-                        {
-                            val += wx*wy*data[y][x];
-                        }
-                        if((x+1) > 0 && (x+1) < cols && y > 0 && y < rows)
-                        {
-                            val += (1.0-wx)*wy*data[y][x+1];
-                        }
-                        if(x > 0 && x < cols && (y+1) > 0 && (y+1) < rows)
-                        {
-                            val += wx*(1.0-wy)*data[y+1][x];
-                        }
-                        if((x+1) > 0 && (x+1) < cols && (y+1) > 0 && (y+1) < rows)
-                        {
-                            val += (1.0-wx)*(1.0-wy)*data[y+1][x+1];
-                        }
-                        if(val >= 0.4)
-                        {
-                            rotated.set(row, col, BLACK);
-                        }
-                        else
-                        {
-                            rotated.set(row, col, WHITE);
-                        }
-                    }
-                }
-            });
-        }
-        try
-        {
-            pool.shutdown();
-            pool.awaitTermination(1000, TimeUnit.SECONDS);
-        }
-        catch(InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-        //System.out.println("Finished rotating!");
-        return rotated;
-    }
-
-    public String toString()
-    {
-        StringBuffer s = new StringBuffer();
-        s.append("PBM: ").append(cols).append("x").append(rows);
-        /*
-        s.append("\n");
-        for(int row=0; row<rows; ++row)
-        {
-            for(int col=0; col<cols; ++col)
-            {
-                s.append(data[row][col]);
-            }
-            if(row != (rows-1))
-            {
-                s.append("\n");
-            }
-        }
-        */
-        return s.toString();
-    }
-
-    public static void main(String[] args)
-        throws Exception
-    {
-        int rows = 701;
-        int cols = 701;
-        Pbm img = new Pbm(rows, cols);
-        for(int row=0; row<rows; ++row)
-        {
-            for(int col=0; col<cols; ++col)
-            {
-                if(row == col)
-                {
-                    img.set(row, col, Pbm.BLACK);
-                }
-                if(row == rows/2)
-                {
-                    img.set(row, col, Pbm.BLACK);
-                }
-                else
-                {
-                    //img.set(row, col, Pbm.BLACK);
-                }
-            }
-        }
-        img.write("test.pbm");
-        img = img.centerRotate(10.0);
-        img.write("test_rot.pbm");
-        Pbm read = new Pbm("test.pbm");
-        read.write("test2.pbm");
-    }
 }
-
