@@ -1,4 +1,0 @@
-#!/bin/sh
-SCRIPT_DIR=`dirname $0`
-export CLASSPATH=$CLASSPATH:$SCRIPT_DIR/../dist/JavaPnm.jar
-java is.image.FindSkew $@

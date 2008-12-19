@@ -156,18 +156,4 @@ public class FindSkew
         System.out.println("Skew: "+skew);
         return skew;
     }
-
-    public static void main(String[] args)
-        throws Exception
-    {
-        if(args.length < 1)
-        {
-            System.err.println("Usage: java image.FindSkew <pbm file>");
-            System.exit(-1);
-        }
-        String filename = args[0];
-        BilevelImage image = Pbm.read(filename);
-        double angleDegrees = findSkew(image);
-        System.out.println(angleDegrees);
-    }
 }
