@@ -93,6 +93,10 @@ public class Main
                     {
                         thresholder = new OtsuThresholder();
                     }
+                    else if("kmeans".equals(args[index]))
+                    {
+                        thresholder = new KMeansThresholder();
+                    }
                     else if("bernsen".equals(args[index]))
                     {
                         ++index;
