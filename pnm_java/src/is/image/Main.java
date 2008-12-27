@@ -187,8 +187,7 @@ public class Main
 
                 if(deskew)
                 {
-                    BilevelImage staffImage = StaffDetection.markStaves(image);
-                    double angleDegrees = FindSkew.findSkew(staffImage);
+                    double angleDegrees = FindSkew.findSkew2(image);
                     image = image.centerRotate(-angleDegrees);
                 }
                 if(rotate)
@@ -281,8 +280,7 @@ public class Main
                     {
                         bwImage = image.toBilevelImage(thresholder);
                     }
-                    bwImage = StaffDetection.markStaves(bwImage);
-                    double angleDegrees = FindSkew.findSkew(bwImage);
+                    double angleDegrees = FindSkew.findSkew2(bwImage);
                     image = image.centerRotate(-angleDegrees);
                 }
                 if(rotate)

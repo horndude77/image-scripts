@@ -145,4 +145,79 @@ public class FindSkew
         System.out.println("Skew: "+skew);
         return skew;
     }
+
+    public static double findSkew2(BilevelImage image)
+    {
+        //A more simple algorithm. Binary search for angle.
+        System.out.println("Finding skew2...");
+
+        double[] thetas = new double[5];
+        thetas[0] = Math.toRadians(-5.0);
+        thetas[4] = Math.toRadians(5.0);
+        thetas[2] = (thetas[4] + thetas[0])/2.0;
+
+        int[] ss = new int[5];
+        ss[0] = s(thetas[0], image);
+        ss[2] = s(thetas[2], image);
+        ss[4] = s(thetas[4], image);
+
+        for(int count=0; count<10; ++count)
+        {
+            thetas[1] = (thetas[2] + thetas[0])/2.0;
+            ss[1] = s(thetas[1], image);
+            thetas[3] = (thetas[4] + thetas[2])/2.0;
+            ss[3] = s(thetas[3], image);
+
+            //Find the max of the inner elements. It becomes the new midpoint
+            //and the two surrounding angles become the new low and high.
+            int max = -1;
+            int maxIndex = 0;
+            for(int i=1; i<thetas.length-1; ++i)
+            {
+                if(ss[i] > max)
+                {
+                    max = ss[i];
+                    maxIndex = i;
+                }
+            }
+
+            thetas[0] = thetas[maxIndex-1];
+            ss[0] = ss[maxIndex-1];
+            thetas[4] = thetas[maxIndex+1];
+            ss[4] = ss[maxIndex+1];
+            //This element must be set last to avoid overwriting a needed value early.
+            thetas[2] = thetas[maxIndex];
+            ss[2] = ss[maxIndex];
+        }
+
+        double skew = Math.toDegrees(-thetas[2]);
+        System.out.println("Skew: "+skew);
+        return skew;
+    }
+
+    public static int s(double theta, BilevelImage image)
+    {
+        final int rows = image.getRows();
+        final int cols = image.getCols();
+
+        int prev = 0;
+        int total = 0;
+        int val = 0;
+        for(int row=0; row<rows; ++row)
+        {
+            double projectedRowSlope = Math.tan(theta);
+            double projectedRow = (cols/2.0)*projectedRowSlope+row;
+            total = 0;
+            for(int col=0; col<cols; ++col)
+            {
+                total += image.getWhiteWhenOutOfRange((int) projectedRow, col);
+                projectedRow += projectedRowSlope;
+            }
+            int diff = total - prev;
+            val += diff*diff;
+            prev = total;
+        }
+
+        return val;
+    }
 }
